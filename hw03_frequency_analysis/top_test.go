@@ -48,6 +48,14 @@ func TestTop10(t *testing.T) {
 		require.Len(t, Top10(""), 0)
 	})
 
+	t.Run("Only symbols in string", func(t *testing.T) {
+		require.Equal(
+			t,
+			[]string{";;", ",", ",,", ",,,", ".", "..", "...", ".....", ";;;", ";;;;"},
+			Top10(",,, , ,, ,,, , ,, . .. ... ..... ;; ;; ;;;; ;; ;;;"),
+		)
+	})
+
 	t.Run("positive test", func(t *testing.T) {
 		if taskWithAsteriskIsCompleted {
 			expected := []string{
