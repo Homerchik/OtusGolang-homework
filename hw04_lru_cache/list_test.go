@@ -49,3 +49,10 @@ func TestList(t *testing.T) {
 		require.Equal(t, []int{70, 80, 60, 40, 10, 30, 50}, elems)
 	})
 }
+
+func TestPushBackToEmpty(t *testing.T) {
+	l := NewList()
+	l.PushBack(1)
+	require.Equal(t, 1, l.Back().Value)
+	require.Equal(t, 1, l.Front().Value)
+}
