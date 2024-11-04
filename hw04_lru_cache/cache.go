@@ -27,13 +27,13 @@ func NewCache(capacity int) Cache {
 	}
 }
 
-func (cache *lruCache) Set(key Key, value interface{}) bool{
+func (cache *lruCache) Set(key Key, value interface{}) bool {
 	storedValue := Value{key, value}
 	if item, exists := cache.items[key]; exists {
 		item.Value = storedValue
 		cache.queue.MoveToFront(item)
 		return true
-	} 
+	}
 	newItem := cache.queue.PushFront(storedValue)
 	if cache.queue.Len() > cache.capacity {
 		item := cache.queue.Back()
@@ -52,6 +52,6 @@ func (cache *lruCache) Get(key Key) (interface{}, bool) {
 	return nil, false
 }
 
-func (cache *lruCache) Clear(){
+func (cache *lruCache) Clear() {
 	cache.items = make(map[Key]*ListItem, cache.capacity)
 }

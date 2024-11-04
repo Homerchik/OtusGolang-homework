@@ -1,6 +1,5 @@
 package hw04lrucache
 
-
 type List interface {
 	Len() int
 	Front() *ListItem
@@ -19,8 +18,8 @@ type ListItem struct {
 
 type list struct {
 	totalLen int
-	first *ListItem
-	last *ListItem
+	first    *ListItem
+	last     *ListItem
 }
 
 func NewList() List {
@@ -29,7 +28,7 @@ func NewList() List {
 
 func (listP *list) Len() int {
 	return listP.totalLen
-} 
+}
 
 func (listP *list) Front() *ListItem {
 	return listP.first
@@ -48,7 +47,7 @@ func (listP *list) PushFront(v interface{}) *ListItem {
 	if listP.last == nil {
 		listP.last = item
 	}
-	listP.totalLen += 1
+	listP.totalLen++
 	return item
 }
 
@@ -61,7 +60,7 @@ func (listP *list) PushBack(v interface{}) *ListItem {
 	if listP.first == nil {
 		listP.first = item
 	}
-	listP.totalLen += 1
+	listP.totalLen++
 	return item
 }
 
@@ -81,7 +80,7 @@ func (listP *list) Remove(item *ListItem) {
 	if item.Next != nil && item.Prev != nil {
 		item.Prev.Next, item.Next.Prev = item.Next, item.Prev
 	}
-	listP.totalLen -= 1
+	listP.totalLen--
 }
 
 func (listP *list) MoveToFront(item *ListItem) {
@@ -94,5 +93,5 @@ func (listP *list) MoveToFront(item *ListItem) {
 		listP.last = item
 	}
 	listP.first = item
-	listP.totalLen += 1
+	listP.totalLen++
 }

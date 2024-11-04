@@ -10,10 +10,10 @@ import (
 )
 
 type TestCase struct {
-	title string
-	items []*Value
+	title         string
+	items         []*Value
 	expectedFront *Value
-	expectedBack *Value
+	expectedBack  *Value
 }
 
 func TestCache(t *testing.T) {
@@ -81,12 +81,14 @@ func TestCacheMultithreading(t *testing.T) {
 	wg.Wait()
 }
 
+func check(t *testing.T, cache *lruCache, front Value, back Value) {
+	t.Helper()
+	require.Equal(t, front, cache.queue.Front().Value, "Check front")
+	require.Equal(t, back, cache.queue.Back().Value, "Check back")
+}
+
 func TestCacheOverloaded(t *testing.T) {
 	a, b, c := &Value{"A", 123}, &Value{"B", 124}, &Value{"C", 125}
-	check := func (t *testing.T, cache *lruCache, front Value, back Value) {
-		require.Equal(t, front, cache.queue.Front().Value, "Check front")
-		require.Equal(t, back, cache.queue.Back().Value, "Check back")
-	}
 	testcases := []TestCase{
 		{"Last element replaces first", []*Value{a, b, c}, c, b},
 		{"Last element replaces first, but first persists due to recent set action", []*Value{a, b, a, c}, c, a},
