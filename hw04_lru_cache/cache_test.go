@@ -98,8 +98,8 @@ func TestCacheOverloaded(t *testing.T) {
 		t.Run(tc.title, func(t *testing.T) {
 			testCache := NewCache(2)
 			for _, v := range tc.items {
-				v.V = rand.Int()
-				testCache.Set(v.Key, v.V)
+				v.value = rand.Int()
+				testCache.Set(v.key, v.value)
 			}
 			check(t, testCache.(*lruCache), *tc.expectedFront, *tc.expectedBack)
 		})

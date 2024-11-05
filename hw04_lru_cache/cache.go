@@ -3,8 +3,8 @@ package hw04lrucache
 type Key string
 
 type Value struct {
-	Key
-	V interface{}
+	key Key
+	value interface{}
 }
 
 type Cache interface {
@@ -28,18 +28,18 @@ func NewCache(capacity int) Cache {
 }
 
 func (cache *lruCache) Set(key Key, value interface{}) bool {
-	storedValue := Value{key, value}
+	storedValue := Value{key: key, value: value}
 	if item, exists := cache.items[key]; exists {
 		item.Value = storedValue
 		cache.queue.MoveToFront(item)
 		return true
 	}
-	newItem := cache.queue.PushFront(storedValue)
-	if cache.queue.Len() > cache.capacity {
+	if cache.queue.Len() == cache.capacity {
 		item := cache.queue.Back()
 		cache.queue.Remove(item)
-		delete(cache.items, item.Value.(Value).Key)
+		delete(cache.items, item.Value.(Value).key)
 	}
+	newItem := cache.queue.PushFront(storedValue)
 	cache.items[key] = newItem
 	return false
 }
@@ -47,11 +47,12 @@ func (cache *lruCache) Set(key Key, value interface{}) bool {
 func (cache *lruCache) Get(key Key) (interface{}, bool) {
 	if item, exists := cache.items[key]; exists {
 		cache.queue.MoveToFront(item)
-		return item.Value.(Value).V, true
+		return item.Value.(Value).value, true
 	}
 	return nil, false
 }
 
 func (cache *lruCache) Clear() {
 	cache.items = make(map[Key]*ListItem, cache.capacity)
+	cache.queue = NewList()
 }

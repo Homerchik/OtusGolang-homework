@@ -39,7 +39,7 @@ func (listP *list) Back() *ListItem {
 }
 
 func (listP *list) PushFront(v interface{}) *ListItem {
-	item := &ListItem{v, listP.first, nil}
+	item := &ListItem{Value: v, Next: listP.first}
 	if listP.first != nil {
 		listP.first.Prev = item
 	}
@@ -84,13 +84,14 @@ func (listP *list) Remove(item *ListItem) {
 }
 
 func (listP *list) MoveToFront(item *ListItem) {
+	if listP.first == item {
+		return
+	}
 	listP.Remove(item)
 	item.Next = listP.first
 	if listP.first != nil {
 		listP.first.Prev = item
-	}
-	if listP.last == nil {
-		listP.last = item
+		item.Prev = nil
 	}
 	listP.first = item
 	listP.totalLen++
