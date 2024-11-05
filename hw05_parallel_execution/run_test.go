@@ -19,13 +19,13 @@ func TestRun(t *testing.T) {
 		tasksCount := 50
 		tasks := make([]Task, 0, tasksCount)
 
-		var runTasksCount int32
+		var runTasksCount atomic.Int32
 
 		for i := 0; i < tasksCount; i++ {
 			err := fmt.Errorf("error from task %d", i)
 			tasks = append(tasks, func() error {
 				time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
-				atomic.AddInt32(&runTasksCount, 1)
+				runTasksCount.Add(1)
 				return err
 			})
 		}
@@ -35,7 +35,7 @@ func TestRun(t *testing.T) {
 		err := Run(tasks, workersCount, maxErrorsCount)
 
 		require.Truef(t, errors.Is(err, ErrErrorsLimitExceeded), "actual err - %v", err)
-		require.LessOrEqual(t, runTasksCount, int32(workersCount+maxErrorsCount), "extra tasks were started")
+		require.LessOrEqual(t, runTasksCount.Load(), int32(workersCount+maxErrorsCount), "extra tasks were started")
 	})
 
 	t.Run("tasks without errors", func(t *testing.T) {
@@ -65,7 +65,7 @@ func createAndEvaluate(fineJobCount, errorJobCount, wksCount, maxErrorsCount int
 	tasksCount := 50
 	tasks := make([]Task, 0, tasksCount)
 
-	var runTasksCount int32
+	var runTasksCount atomic.Int32
 	var sumTime time.Duration
 
 	for i := 0; i < errorJobCount; i++ {
@@ -74,7 +74,7 @@ func createAndEvaluate(fineJobCount, errorJobCount, wksCount, maxErrorsCount int
 
 		tasks = append(tasks, func() error {
 			time.Sleep(taskSleep)
-			atomic.AddInt32(&runTasksCount, 1)
+			runTasksCount.Add(1)
 			return fmt.Errorf("error from task %d", i)
 		})
 	}
@@ -84,12 +84,12 @@ func createAndEvaluate(fineJobCount, errorJobCount, wksCount, maxErrorsCount int
 
 		tasks = append(tasks, func() error {
 			time.Sleep(taskSleep)
-			atomic.AddInt32(&runTasksCount, 1)
+			runTasksCount.Add(1)
 			return nil
 		})
 	}
 	start := time.Now()
 	err := Run(tasks, wksCount, maxErrorsCount)
 	elapsedTime := time.Since(start)
-	return runTasksCount, int64(elapsedTime), sumTime, err
+	return runTasksCount.Load(), int64(elapsedTime), sumTime, err
 }
