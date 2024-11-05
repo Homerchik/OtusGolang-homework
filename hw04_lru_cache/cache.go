@@ -3,7 +3,7 @@ package hw04lrucache
 type Key string
 
 type Value struct {
-	key Key
+	key   Key
 	value interface{}
 }
 
