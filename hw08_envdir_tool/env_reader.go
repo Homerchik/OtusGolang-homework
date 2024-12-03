@@ -8,8 +8,6 @@ import (
 )
 
 const chunk int64 = 256
-
-
 type Environment map[string]EnvValue
 
 // EnvValue helps to distinguish between empty files and files with the first empty line.
