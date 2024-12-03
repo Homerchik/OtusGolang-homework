@@ -9,7 +9,6 @@ import (
 
 const chunk int64 = 256
 
-// var replacer = strings.NewReplacer("\x00", "\n")
 
 type Environment map[string]EnvValue
 
