@@ -11,9 +11,9 @@ import (
 var (
 	ErrUnsupportedFile       = errors.New("unsupported file")
 	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
-
-	bulkSize int64 = 256
 )
+
+const bulkSize int64 = 256
 
 func checkInFile(file *os.File, offset int64) (int64, error) {
 	stat, err := file.Stat()
@@ -49,20 +49,19 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	}
 	defer toFile.Close()
 
-	bar := progressbar.NewOptions(100)
-
 	bytesRead := int64(0)
 	buf := make([]byte, bulkSize)
 	if limit == 0 {
 		limit = size
 	}
 	total := min(limit, max(0, size-offset))
+	bar := progressbar.DefaultBytes(total, "Copying")
+	writer := io.MultiWriter(toFile, bar)
 	for bytesRead < limit {
 		n, err := fromFile.ReadAt(buf, offset+bytesRead)
 		toWrite := min(limit-bytesRead, bulkSize, int64(n))
 		bytesRead += toWrite
-		bar.Set(int(100 * bytesRead / total))
-		toFile.Write(buf[:toWrite])
+		writer.Write(buf[:toWrite])
 		if err == io.EOF {
 			return nil
 		}
