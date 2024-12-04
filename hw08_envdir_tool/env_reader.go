@@ -1,13 +1,15 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
-const chunk int64 = 256
+const delimiter byte = 0x0A
 
 type Environment map[string]EnvValue
 
@@ -18,26 +20,13 @@ type EnvValue struct {
 }
 
 func readEnvValue(file *os.File) (*EnvValue, error) {
-	buf := make([]byte, chunk)
-	var line []byte
-	for {
-		n, err := file.Read(buf)
-		if err != nil && err != io.EOF {
-			return nil, err
-		}
-		if n > 0 {
-			line = append(line, buf...)
-		}
-		if strings.Contains(string(line), "\n") || err == io.EOF {
-			line := bytes.ReplaceAll(
-				bytes.Split(line, []byte{0x0A})[0],
-				[]byte{0x00},
-				[]byte{0x0A},
-			)
-			value := strings.TrimRight(string(line), " \t\n")
-			return &EnvValue{Value: value, NeedRemove: false}, nil
-		}
+	data, err := bufio.NewReader(file).ReadBytes(delimiter)
+	if err != nil && err != io.EOF {
+		return nil, err
 	}
+	data = bytes.ReplaceAll(data, []byte{0x00}, []byte{delimiter})
+	value := strings.TrimRight(string(data), " \t\n")
+	return &EnvValue{Value: value, NeedRemove: false}, nil
 }
 
 // ReadDir reads a specified directory and returns map of env variables.
@@ -54,7 +43,7 @@ func ReadDir(dir string) (Environment, error) {
 		if file.IsDir() || strings.Contains(file.Name(), "=") {
 			continue
 		}
-		in, err := os.Open(dir + "/" + file.Name())
+		in, err := os.Open(filepath.Join(dir, file.Name()))
 		if err != nil {
 			return nil, err
 		}

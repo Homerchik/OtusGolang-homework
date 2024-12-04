@@ -1,7 +1,7 @@
 package main
 
 import (
-	"io"
+	// "io".
 	"log"
 	"os"
 	"os/exec"
@@ -13,10 +13,10 @@ func prepareEnv(env Environment) error {
 			if err := os.Unsetenv(k); err != nil {
 				return err
 			}
-		} else {
-			if err := os.Setenv(k, v.Value); err != nil {
-				return err
-			}
+			continue
+		}
+		if err := os.Setenv(k, v.Value); err != nil {
+			return err
 		}
 	}
 	return nil
@@ -27,33 +27,7 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 	// Place your code here.
 	prepareEnv(env)
 	command := exec.Command(cmd[0], cmd[1:]...) // #nosec G204
-
-	stdin, err := command.StdinPipe()
-	if err != nil {
-		log.Fatalf("unable to attach to stdin, %v", err)
-		return
-	}
-	go func() {
-		io.Copy(stdin, os.Stdin)
-	}()
-
-	stdout, err := command.StdoutPipe()
-	if err != nil {
-		log.Fatalf("unable to attach to stdout, %v", err)
-		return
-	}
-	go func() {
-		io.Copy(os.Stdout, stdout)
-	}()
-
-	stderr, err := command.StderrPipe()
-	if err != nil {
-		log.Fatalf("unable to attach to stderr, %v", err)
-		return
-	}
-	go func() {
-		io.Copy(os.Stderr, stderr)
-	}()
+	command.Stdin, command.Stdout, command.Stderr = os.Stdin, os.Stdout, os.Stderr
 
 	if err := command.Start(); err != nil {
 		log.Fatalf("unable to start program, %v", err)
