@@ -2,6 +2,10 @@ package main
 
 import (
 	"errors"
+	"io"
+	"os"
+
+	"github.com/schollz/progressbar/v3"
 )
 
 var (
@@ -9,7 +13,58 @@ var (
 	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
 )
 
+const bulkSize int64 = 256
+
+func checkInFile(file *os.File, offset int64) (int64, error) {
+	stat, err := file.Stat()
+	if err != nil {
+		return 0, err
+	}
+	size := stat.Size()
+	if offset > size {
+		return 0, ErrOffsetExceedsFileSize
+	}
+	if size == 0 {
+		return 0, ErrUnsupportedFile
+	}
+	return size, nil
+}
+
 func Copy(fromPath, toPath string, offset, limit int64) error {
 	// Place your code here.
+	fromFile, err := os.Open(fromPath)
+	if err != nil {
+		return err
+	}
+	defer fromFile.Close()
+
+	size, err := checkInFile(fromFile, offset)
+	if err != nil {
+		return err
+	}
+
+	toFile, err := os.Create(toPath)
+	if err != nil {
+		return err
+	}
+	defer toFile.Close()
+
+	bytesRead := int64(0)
+	buf := make([]byte, bulkSize)
+	if limit == 0 {
+		limit = size
+	}
+	total := min(limit, max(0, size-offset))
+	bar := progressbar.DefaultBytes(total, "Copying")
+	writer := io.MultiWriter(toFile, bar)
+	for bytesRead < limit {
+		n, err := fromFile.ReadAt(buf, offset+bytesRead)
+		toWrite := min(limit-bytesRead, bulkSize, int64(n))
+		bytesRead += toWrite
+		writer.Write(buf[:toWrite])
+		if err == io.EOF {
+			return nil
+		}
+	}
 	return nil
 }
