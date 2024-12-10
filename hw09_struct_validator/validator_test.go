@@ -105,9 +105,6 @@ func TestValidate(t *testing.T) {
 					require.ErrorAs(t, actErr, &err)
 				}
 			}
-			// checkError(t, errs, tt.expectedErrors)
-			// require.Equal(t, tt.expectedErrors, errors, "Expected errors not equal to the validation ones")
-			// 		// Place your code here.
 			_ = tt
 		})
 	}
