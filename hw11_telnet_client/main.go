@@ -1,20 +1,18 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net"
 	"os"
-	"sync"
+	"os/signal"
 	"time"
 
 	"github.com/spf13/pflag"
 )
 
 func main() {
-	var (
-		timeout time.Duration
-		wg      sync.WaitGroup
-	)
+	var timeout time.Duration
 	pflag.DurationVar(&timeout, "timeout", time.Duration(10)*time.Second, "timeout for connection")
 	pflag.Parse()
 	args := pflag.Args()
@@ -26,23 +24,17 @@ func main() {
 	if err := client.Connect(); err != nil {
 		log.Fatal(err)
 	}
-	wg.Add(2)
-	go func() {
-		for {
-			if err := client.Receive(); err != nil {
-				break
-			}
-		}
-		wg.Done()
-	}()
-
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+	go client.Send()
 	go func() {
 		for {
 			if err := client.Send(); err != nil {
 				break
 			}
 		}
-		wg.Done()
+		stop()
 	}()
-	wg.Wait()
+	go client.Receive()
+	<-ctx.Done()
 }

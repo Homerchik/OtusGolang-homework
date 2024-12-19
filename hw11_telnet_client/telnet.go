@@ -2,12 +2,15 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"net"
 	"os"
 	"time"
 )
+
+var ErrServerDisconnected = errors.New("server disconnected")
 
 type TelnetClient interface {
 	Connect() error
@@ -49,7 +52,7 @@ func (c *MyClient) Send() error {
 	if n > 0 {
 		if _, errCon := c.conn.Write(buf[:n]); errCon != nil {
 			fmt.Fprintf(os.Stderr, "...Connection was closed by peer\n")
-			return errCon
+			return ErrServerDisconnected
 		}
 	}
 	if err == io.EOF {
