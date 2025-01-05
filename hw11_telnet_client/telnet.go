@@ -38,7 +38,10 @@ func (c *MyClient) Connect() error {
 }
 
 func (c *MyClient) Close() error {
-	return c.conn.Close()
+	if c.conn != nil {
+		return c.conn.Close()
+	}
+	return nil
 }
 
 func (c *MyClient) Send() error {
