@@ -9,6 +9,9 @@ type (
 type Stage func(in In) (out Out)
 
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
+	out := make(Bi)
+	go wrapper(in, done, out)
+	in = out
 	for _, stage := range stages {
 		out := make(Bi)
 		go wrapper(in, done, out)
@@ -19,13 +22,15 @@ func ExecutePipeline(in In, done In, stages ...Stage) Out {
 }
 
 func wrapper(in In, done In, out Bi) {
-	defer close(out)
+	defer func() {
+		//nolint:revive
+		for range in {
+		}
+		close(out)
+	}()
 	for {
 		select {
 		case <-done:
-			// It appears that without this one TestAllStageStop stucks on first stages,
-			//  trying to send additional data to the channel no one reads
-			<-in
 			return
 		case i, ok := <-in:
 			if !ok {
@@ -33,7 +38,6 @@ func wrapper(in In, done In, out Bi) {
 			}
 			select {
 			case <-done:
-				<-in
 				return
 			case out <- i:
 			}
