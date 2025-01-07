@@ -8,10 +8,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/app"
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/logger"
-	internalhttp "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/storage/memory"
+	"github.com/homerchik/hw12_13_14_15_calendar/internal/app"
+	"github.com/homerchik/hw12_13_14_15_calendar/internal/logger"
+	internalhttp "github.com/homerchik/hw12_13_14_15_calendar/internal/server/http"
+	memorystorage "github.com/homerchik/hw12_13_14_15_calendar/internal/storage/memory"
+	sqlstorage "github.com/homerchik/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
 var configFile string
@@ -31,7 +32,11 @@ func main() {
 	config := NewConfig()
 	logg := logger.New(config.Logger.Level)
 
-	storage := memorystorage.New()
+	if config.Storage.Type == "memory" {
+		storage := memorystorage.New()
+	} else {
+		storage := sqlstorage.New(config.Storage.SQL)
+	}
 	calendar := app.New(logg, storage)
 
 	server := internalhttp.NewServer(logg, calendar)

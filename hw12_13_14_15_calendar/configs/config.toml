@@ -1,5 +1,17 @@
 [logger]
 level = "INFO"
 
-# TODO
-# ...
+[http]
+host = ""
+port = ""
+
+[storage]
+type = "in-memory" # possible values [in-memory, sql]
+
+[storage.sql]
+host = ""
+port = ""
+dialect = ""
+username = ""
+password = ""
+

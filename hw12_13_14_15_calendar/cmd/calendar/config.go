@@ -5,7 +5,8 @@ package main
 // при их конструировании только необходимые параметры, а также уменьшает вероятность циклической зависимости.
 type Config struct {
 	Logger LoggerConf
-	// TODO
+	Http HttpConf
+	Storage Storage
 }
 
 type LoggerConf struct {
@@ -13,8 +14,24 @@ type LoggerConf struct {
 	// TODO
 }
 
+type HttpConf struct {
+	Host string
+	Port int
+}
+
+type Storage struct {
+	Type string
+	SQL SQLConf
+}
+
+type SQLConf struct {
+	Host string
+	Port int
+	Dialect string
+	Username string
+	Password string
+}
+
 func NewConfig() Config {
 	return Config{}
 }
-
-// TODO
