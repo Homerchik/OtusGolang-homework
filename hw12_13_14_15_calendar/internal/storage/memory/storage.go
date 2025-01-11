@@ -2,12 +2,12 @@ package memorystorage
 
 import (
 	"errors"
-	"sort"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/homerchik/hw12_13_14_15_calendar/internal/storage"
+	"github.com/homerchik/hw12_13_14_15_calendar/internal/logic"
 )
 
 
@@ -25,7 +25,7 @@ func New() *Storage {
 func (s *Storage) AddEvent(event storage.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if err := s.checkSchedule(event.UserId, event.StartDate, event.EndDate); err != nil {
+	if err := logic.CheckEvent(event, s.GetUserEvents(event.UserId)); err != nil {
 		return errors.Join(err, storage.ErrEventCantBeAdded)
 	}
 	s.Events[event.StartDate] = append(s.Events[event.StartDate], event)
@@ -76,15 +76,11 @@ func (s *Storage) UpdateEvent(event storage.Event) error {
 	}
 }
 
-func (s *Storage) GetEvents(userId uuid.UUID, fromDate, toDate time.Time) (storage.Schedule, error) {
+func (s *Storage) GetEvents(fromDate, toDate time.Time) (storage.Schedule, error) {
 	result := make(storage.Schedule, 0)
 	for date, events := range s.Events {
 		if date.After(fromDate) && date.Before(toDate) {
-			for _, event := range events {
-				if userId == uuid.Nil || event.UserId == userId {
-					result = append(result, event)
-				}
-			}
+			result = append(result, events...)
 		}
 	}
 	return result, nil
@@ -111,25 +107,4 @@ func (s *Storage) GetEvent(eventUuid uuid.UUID) (int, *storage.Event, error) {
 		}
 	}
 	return -1, nil, storage.ErrNoEventFound
-}
-
-func (s *Storage) checkSchedule(userId uuid.UUID, startDate, endDate time.Time) error {
-	if startDate.Before(time.Now()) {
-		return storage.ErrStartTimeBeforeNow
-	}
-	events := s.GetUserEvents(userId)
-	if len(events) == 0 {
-		return nil
-	}
-	sort.Sort(events)
-	for _, event := range events {
-		if event.StartDate.Before(startDate) && event.EndDate.Before(startDate) {
-			continue
-		} else if event.StartDate.After(startDate) && event.StartDate.After(endDate) {
-			return nil
-		} else {
-			return storage.ErrEventIntersection
-		}
-	}
-	return nil
 }

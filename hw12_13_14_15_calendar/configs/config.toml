@@ -11,7 +11,8 @@ type = "in-memory" # possible values [in-memory, sql]
 [storage.sql]
 host = ""
 port = ""
-dialect = ""
+db_name = ""
+driver = ""
 username = ""
 password = ""
 

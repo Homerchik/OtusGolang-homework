@@ -27,7 +27,8 @@ type Storage struct {
 type SQLConf struct {
 	Host string
 	Port int
-	Dialect string
+	DbName string
+	Driver string
 	Username string
 	Password string
 }
