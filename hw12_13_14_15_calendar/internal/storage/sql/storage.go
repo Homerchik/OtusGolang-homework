@@ -41,9 +41,10 @@ func (s *Storage) AddEvent(event storage.Event) error {
 	if err := logic.CheckEvent(event, s.GetUserEvents(event.UserId)); err != nil {
 		return errors.Join(err, storage.ErrEventCantBeAdded)
 	}
+	notifyBefore := event.NotifyBefore.Seconds()
 	if _, err := s.db.Exec(
-		"INSERT INTO events (id, user_id, title, description, start_date, end_date) VALUES ($1, $2, $3, $4, $5, $6)",
-		event.ID, event.UserId, event.Title, event.Description, event.StartDate, event.EndDate,
+		"INSERT INTO events (id, user_id, title, description, start_date, end_date, notify_before) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+		event.ID, event.UserId, event.Title, event.Description, event.StartDate, event.EndDate, int(notifyBefore),
 	); err != nil {
 		return errors.Join(err, storage.ErrEventCantBeAdded)
 	}
@@ -94,7 +95,7 @@ func (s *Storage) GetEvents(fromDate, toDate time.Time) (storage.Schedule, error
 	var events storage.Schedule
 	for rows.Next() {
 		var event storage.Event
-		if err := rows.Scan(&event.ID, &event.UserId, &event.Title, &event.Description, &event.StartDate, &event.EndDate); err != nil {
+		if err := rows.Scan(&event.ID, &event.UserId, &event.Title, &event.Description, &event.StartDate, &event.EndDate, &event.NotifyBefore); err != nil {
 			return nil, err
 		}
 		events = append(events, event)
@@ -111,7 +112,7 @@ func (s *Storage) GetUserEvents(userId uuid.UUID) storage.Schedule {
 	var events storage.Schedule
 	for rows.Next() {
 		var event storage.Event
-		if err := rows.Scan(&event.ID, &event.UserId, &event.Title, &event.Description, &event.StartDate, &event.EndDate); err != nil {
+		if err := rows.Scan(&event.ID, &event.UserId, &event.Title, &event.Description, &event.StartDate, &event.EndDate, &event.NotifyBefore); err != nil {
 			return nil
 		}
 		events = append(events, event)
