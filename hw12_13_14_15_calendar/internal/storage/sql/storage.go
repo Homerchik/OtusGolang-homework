@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/homerchik/hw12_13_14_15_calendar/internal/logic"
 	"github.com/homerchik/hw12_13_14_15_calendar/internal/storage"
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 
@@ -38,13 +38,16 @@ func (s *Storage) Close(ctx context.Context) error {
 }
 
 func (s *Storage) AddEvent(event storage.Event) error {
-	if err := logic.CheckEvent(event, s.GetUserEvents(event.UserId)); err != nil {
+	events, err := s.GetUserEvents(event.UserId)
+	if err != nil {
+		return err
+	}
+	if err := logic.CheckEvent(event, events); err != nil {
 		return errors.Join(err, storage.ErrEventCantBeAdded)
 	}
-	notifyBefore := event.NotifyBefore.Seconds()
 	if _, err := s.db.Exec(
 		"INSERT INTO events (id, user_id, title, description, start_date, end_date, notify_before) VALUES ($1, $2, $3, $4, $5, $6, $7)",
-		event.ID, event.UserId, event.Title, event.Description, event.StartDate, event.EndDate, int(notifyBefore),
+		event.ID, event.UserId, event.Title, event.Description, event.StartDate, event.EndDate, event.NotifyBefore,
 	); err != nil {
 		return errors.Join(err, storage.ErrEventCantBeAdded)
 	}
@@ -61,7 +64,10 @@ func (s *Storage) DeleteEvent(eventUuid uuid.UUID) error {
 
 func (s *Storage) UpdateEvent(event storage.Event) error {
 	if event.HasDifferentDate(event) {
-		events := s.GetUserEvents(event.UserId)
+		events, err := s.GetUserEvents(event.UserId)
+		if err != nil {
+			return err
+		}
 		idx := -1
 		for i, e := range events {
 			if e.ID == event.ID {
@@ -77,8 +83,8 @@ func (s *Storage) UpdateEvent(event storage.Event) error {
 		}
 	}
 	_, err := s.db.Exec(
-		"UPDATE events SET title = $1, description = $2, start_date = $3, end_date = $4 WHERE id = $5",
-		event.Title, event.Description, event.StartDate, event.EndDate, event.ID,
+		"UPDATE events SET title = $1, description = $2, start_date = $3, end_date = $4, notify_before = $5 WHERE id = $6",
+		event.Title, event.Description, event.StartDate, event.EndDate, event.NotifyBefore, event.ID,
 	)
 	if err != nil {
 		return errors.Join(err, storage.ErrEventCantBeUpdated)
@@ -103,19 +109,42 @@ func (s *Storage) GetEvents(fromDate, toDate time.Time) (storage.Schedule, error
 	return events, nil
 }
 
-func (s *Storage) GetUserEvents(userId uuid.UUID) storage.Schedule {
+func (s *Storage) GetUserEvents(userId uuid.UUID) (storage.Schedule, error) {
 	rows, err := s.db.Query("SELECT * FROM events WHERE user_id = $1", userId)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	defer rows.Close()
 	var events storage.Schedule
 	for rows.Next() {
-		var event storage.Event
-		if err := rows.Scan(&event.ID, &event.UserId, &event.Title, &event.Description, &event.StartDate, &event.EndDate, &event.NotifyBefore); err != nil {
-			return nil
+		event, err := parseEvent(rows)
+		if err != nil {
+			return nil, err
 		}
 		events = append(events, event)
 	}
-	return events
+	return events, nil
+}
+
+func (s *Storage) GetEventByID(id uuid.UUID) (storage.Event, error) {
+	row, err := s.db.Query("SELECT * FROM events WHERE id = $1", id)
+	if err != nil {
+		return storage.Event{}, err
+	}
+	if row.Next() {
+		event, err := parseEvent(row)
+		if err != nil {
+			return storage.Event{}, err
+		}
+		return event, nil
+	}
+	return storage.Event{}, storage.ErrNoEventFound
+}
+
+func parseEvent(rows *sql.Rows) (storage.Event, error) {
+	var event storage.Event
+	if err := rows.Scan(&event.ID, &event.UserId, &event.Title, &event.Description, &event.StartDate, &event.EndDate, &event.NotifyBefore); err != nil {
+		return storage.Event{}, err
+	}
+	return event, nil
 }

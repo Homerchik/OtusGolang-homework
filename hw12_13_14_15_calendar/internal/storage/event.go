@@ -23,7 +23,7 @@ type Event struct {
 	Description string
 	StartDate time.Time
 	EndDate time.Time
-	NotifyBefore time.Duration
+	NotifyBefore int
 }
 
 func NewEvent(userId uuid.UUID, title, description string, start, end time.Time, notifyBefore time.Duration) Event {
@@ -32,9 +32,9 @@ func NewEvent(userId uuid.UUID, title, description string, start, end time.Time,
 		UserId: userId,
 		Title: title,
 		Description: description,
-		StartDate: start,
-		EndDate: end,
-		NotifyBefore: notifyBefore,
+		StartDate: start.UTC(),
+		EndDate: end.UTC(),
+		NotifyBefore: int(notifyBefore.Seconds()),
 	}
 }
 

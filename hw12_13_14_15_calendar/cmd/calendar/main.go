@@ -48,17 +48,17 @@ func main() {
 	if config.Storage.Type == "memory" {
 		storage = memorystorage.New()
 	} else {
-		connStr := fmt.Sprintf(
+		dsn := fmt.Sprintf(
 			"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", 
 			config.Storage.SQL.Host, config.Storage.SQL.Port, config.Storage.SQL.Username, config.Storage.SQL.Password, config.Storage.SQL.DbName,
 		)
 		if migrateUpgrade {
-			performMigration(connStr, config.Storage.SQL.Driver, "up", migrationVersion)
+			performMigration(dsn, config.Storage.SQL.Driver, "up", migrationVersion)
 		} else if migrateDowngrade {
-			performMigration(connStr, config.Storage.SQL.Driver, "down", migrationVersion)
+			performMigration(dsn, config.Storage.SQL.Driver, "down", migrationVersion)
 		}
 		sqlStorage := sqlstorage.New()
-		if err := sqlStorage.Connect(ctx, connStr, config.Storage.SQL.Driver); err != nil {
+		if err := sqlStorage.Connect(ctx, dsn, config.Storage.SQL.Driver); err != nil {
 			log.Error("failed to connect to storage: " + err.Error())
 			cancel()
 			os.Exit(1) //nolint:gocritic
@@ -94,11 +94,11 @@ func main() {
 	}
 }
 
-func performMigration(dbString, driver, command, version string) {
+func performMigration(dsn, driver, command, version string) {
 	if version != "" {
-		command = fmt.Sprintf("%s-to")
+		command = fmt.Sprintf("%s-to", command)
 	}
-	db, err := goose.OpenDBWithDriver(driver, dbString)
+	db, err := goose.OpenDBWithDriver(driver, dsn)
 	if err != nil {
 		log.Fatalf("goose: failed to open DB: %v\n", err)
 	}
@@ -110,7 +110,7 @@ func performMigration(dbString, driver, command, version string) {
 	}()
 
 	ctx := context.Background()
-	if err := goose.RunContext(ctx, command, db, "./migrations", []string{}...); err != nil {
+	if err := goose.RunContext(ctx, command, db, "./migrations"); err != nil {
 		log.Fatalf("goose %v: %v", command, err)
 	}
 }

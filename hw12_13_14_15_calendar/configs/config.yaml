@@ -11,7 +11,7 @@ storage:
     host: "localhost"
     port: 5432
     db_name: "test"
-    driver: "postgres"
+    driver: "pgx"
     username: "postgres"
     password: "postgres"
 

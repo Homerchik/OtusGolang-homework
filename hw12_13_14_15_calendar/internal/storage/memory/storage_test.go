@@ -1,6 +1,7 @@
 package memorystorage
 
 import (
+	"sync"
 	"testing"
 	"time"
 
@@ -136,21 +137,21 @@ func TestEventUpdateDateFields(t *testing.T) {
 		require.NoError(t, testStorage.AddEvent(event))
 	}
 	t.Run("Check start date is changed, it's possible", func(t *testing.T) {
-		updatedEvent := storage.NewEvent(userID, "Event 1", "Description 1", startTime.Add(time.Duration(30) * time.Minute), events[0].EndDate, events[0].NotifyBefore)
+		updatedEvent := storage.NewEvent(userID, "Event 1", "Description 1", startTime.Add(time.Duration(30) * time.Minute), events[0].EndDate, time.Minute)
 		updatedEvent.ID = events[0].ID
 		require.NoError(t, testStorage.UpdateEvent(updatedEvent))
 		require.Equal(t, updatedEvent, testStorage.Events[updatedEvent.StartDate][0])
 	})
 
 	t.Run("Check end date is changed, and it's possible", func(t *testing.T) {
-		updatedEvent := storage.NewEvent(userID, "Event 1", "Description 1", events[0].StartDate, events[0].EndDate.Add(-time.Duration(30)*time.Minute), events[0].NotifyBefore)
+		updatedEvent := storage.NewEvent(userID, "Event 1", "Description 1", events[0].StartDate, events[0].EndDate.Add(-time.Duration(30)*time.Minute), time.Minute)
 		updatedEvent.ID = events[0].ID
 		require.NoError(t, testStorage.UpdateEvent(updatedEvent))
 		require.Equal(t, updatedEvent, testStorage.Events[updatedEvent.StartDate][0])
 	})
 
 	t.Run("Check start date changed, moved in the schedule", func(t *testing.T) {
-		updatedEvent := storage.NewEvent(userID, "Event 1", "Description 1", startTime.Add(time.Duration(7) * time.Hour), startTime.Add(time.Duration(8) * time.Hour), events[0].NotifyBefore)
+		updatedEvent := storage.NewEvent(userID, "Event 1", "Description 1", startTime.Add(time.Duration(7) * time.Hour), startTime.Add(time.Duration(8) * time.Hour), time.Minute)
 		updatedEvent.ID = events[0].ID
 		require.NoError(t, testStorage.UpdateEvent(updatedEvent))
 		require.Equal(t, updatedEvent, testStorage.Events[updatedEvent.StartDate][0])
@@ -171,7 +172,7 @@ func TestEventUpdateDateFieldsErrors(t *testing.T) {
 	}
 	
 	t.Run("Check start date changed, won't fit anymore, error thrown", func(t *testing.T) {
-		updatedEvent := storage.NewEvent(userID, "Event 1", "Description 1", startTime.Add(time.Duration(3) * time.Hour), startTime.Add(time.Duration(4) * time.Hour), events[0].NotifyBefore)
+		updatedEvent := storage.NewEvent(userID, "Event 1", "Description 1", startTime.Add(time.Duration(3) * time.Hour), startTime.Add(time.Duration(4) * time.Hour), time.Minute)
 		updatedEvent.ID = events[0].ID
 		require.Error(t, testStorage.UpdateEvent(updatedEvent), storage.ErrEventCantBeUpdated)
 		require.Equal(t, events[0], testStorage.Events[events[0].StartDate][0])
@@ -180,11 +181,45 @@ func TestEventUpdateDateFieldsErrors(t *testing.T) {
 	})
 
 	t.Run("Check end date changed, won't fit anymore, error thrown", func(t *testing.T) {
-		updatedEvent := storage.NewEvent(userID, "Event 1", "Description 1", events[0].StartDate, startTime.Add(time.Duration(4) * time.Hour), events[0].NotifyBefore)
+		updatedEvent := storage.NewEvent(userID, "Event 1", "Description 1", events[0].StartDate, startTime.Add(time.Duration(4) * time.Hour), time.Minute)
 		updatedEvent.ID = events[0].ID
 		require.Error(t, testStorage.UpdateEvent(updatedEvent), storage.ErrEventCantBeUpdated)
 		require.Equal(t, events[0], testStorage.Events[events[0].StartDate][0])
 		require.Equal(t, events[1], testStorage.Events[events[1].StartDate][0])
 		require.Equal(t, events[2], testStorage.Events[events[2].StartDate][0])
 	})
+}
+
+func TestAddingDeletingEventsInParallel(t *testing.T) {
+	testStorage := New()
+	userID := uuid.New()
+	startTime := time.Now()
+	wg := &sync.WaitGroup{}
+	events := storage.Schedule{
+		storage.NewEvent(userID, "Event 1", "Description 1", startTime.Add(time.Hour), startTime.Add(time.Duration(2) * time.Hour), time.Minute),
+		storage.NewEvent(userID, "Event 2", "Description 2", startTime.Add(time.Duration(3) * time.Hour), startTime.Add(time.Duration(4) * time.Hour), time.Minute),
+		storage.NewEvent(userID, "Event 3", "Description 3", startTime.Add(time.Duration(5) * time.Hour), startTime.Add(time.Duration(6) * time.Hour), time.Minute),
+		storage.NewEvent(uuid.New(), "Event 2-1", "Description 2-1", startTime.Add(time.Duration(3) * time.Hour), startTime.Add(time.Duration(4) * time.Hour), time.Minute),
+		storage.NewEvent(uuid.New(), "Event 3-1", "Description 3-1", startTime.Add(time.Duration(5) * time.Hour), startTime.Add(time.Duration(6) * time.Hour), time.Minute),
+	}
+	for _, event := range events {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			require.NoError(t, testStorage.AddEvent(event))
+		}()
+	}
+	wg.Wait()
+	require.Equal(t, len(testStorage.Events), 3)
+	require.Equal(t, len(testStorage.Events[startTime.Add(time.Duration(3) * time.Hour)]), 2)
+	require.Equal(t, len(testStorage.Events[startTime.Add(time.Duration(5) * time.Hour)]), 2)
+	for _, event := range events {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			require.NoError(t, testStorage.DeleteEvent(event.ID))
+		}()
+	}
+	wg.Wait()
+	require.Equal(t, len(testStorage.Events), 0)
 }
