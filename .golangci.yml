@@ -26,9 +26,6 @@ issues:
         - dupl
         - gocyclo
         - gosec
-  exclude-dirs:
-    - vendor/
-
 
 linters:
   disable-all: true
