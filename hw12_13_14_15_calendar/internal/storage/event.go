@@ -9,31 +9,31 @@ import (
 
 var (
 	ErrStartTimeBeforeNow = errors.New("start time is before now")
-	ErrEventIntersection   = errors.New("event intersection")
-	ErrNoEventFound 	  = errors.New("no event found")
+	ErrEventIntersection  = errors.New("event intersection")
+	ErrNoEventFound       = errors.New("no event found")
 	ErrEventCantBeAdded   = errors.New("event can't be added")
 	ErrEventCantBeUpdated = errors.New("event can't be updated")
 	ErrEventCantBeDeleted = errors.New("event can't be deleted")
 )
 
 type Event struct {
-	ID    uuid.UUID
-	Title string
-	UserId uuid.UUID
-	Description string
-	StartDate time.Time
-	EndDate time.Time
+	ID           uuid.UUID
+	Title        string
+	UserID       uuid.UUID
+	Description  string
+	StartDate    time.Time
+	EndDate      time.Time
 	NotifyBefore int
 }
 
-func NewEvent(userId uuid.UUID, title, description string, start, end time.Time, notifyBefore time.Duration) Event {
+func NewEvent(userID uuid.UUID, title, description string, start, end time.Time, notifyBefore time.Duration) Event {
 	return Event{
-		ID: uuid.New(),
-		UserId: userId,
-		Title: title,
-		Description: description,
-		StartDate: start.UTC(),
-		EndDate: end.UTC(),
+		ID:           uuid.New(),
+		UserID:       userID,
+		Title:        title,
+		Description:  description,
+		StartDate:    start.UTC(),
+		EndDate:      end.UTC(),
 		NotifyBefore: int(notifyBefore.Seconds()),
 	}
 }

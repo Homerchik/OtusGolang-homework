@@ -2,17 +2,15 @@ package sqlstorage
 
 import (
 	"context"
-	"time"
-	"errors"
-
 	"database/sql"
+	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/homerchik/hw12_13_14_15_calendar/internal/logic"
 	"github.com/homerchik/hw12_13_14_15_calendar/internal/storage"
-	_ "github.com/jackc/pgx/v5/stdlib"
+	_ "github.com/jackc/pgx/v5/stdlib" // importing driver for pg
 )
-
 
 type Storage struct {
 	db *sql.DB
@@ -22,7 +20,7 @@ func New() *Storage {
 	return &Storage{}
 }
 
-func (s *Storage) Connect(ctx context.Context, connStr string, driver string) error {
+func (s *Storage) Connect(_ context.Context, connStr string, driver string) error {
 	var err error
 	if s.db, err = sql.Open(driver, connStr); err != nil {
 		return err
@@ -30,7 +28,7 @@ func (s *Storage) Connect(ctx context.Context, connStr string, driver string) er
 	return nil
 }
 
-func (s *Storage) Close(ctx context.Context) error {
+func (s *Storage) Close(_ context.Context) error {
 	if err := s.db.Close(); err != nil {
 		return err
 	}
@@ -38,7 +36,7 @@ func (s *Storage) Close(ctx context.Context) error {
 }
 
 func (s *Storage) AddEvent(event storage.Event) error {
-	events, err := s.GetUserEvents(event.UserId)
+	events, err := s.GetUserEvents(event.UserID)
 	if err != nil {
 		return err
 	}
@@ -46,16 +44,17 @@ func (s *Storage) AddEvent(event storage.Event) error {
 		return errors.Join(err, storage.ErrEventCantBeAdded)
 	}
 	if _, err := s.db.Exec(
-		"INSERT INTO events (id, user_id, title, description, start_date, end_date, notify_before) VALUES ($1, $2, $3, $4, $5, $6, $7)",
-		event.ID, event.UserId, event.Title, event.Description, event.StartDate, event.EndDate, event.NotifyBefore,
+		"INSERT INTO events (id, user_id, title, description, start_date, end_date, notify_before)"+
+			"VALUES ($1, $2, $3, $4, $5, $6, $7)",
+		event.ID, event.UserID, event.Title, event.Description, event.StartDate, event.EndDate, event.NotifyBefore,
 	); err != nil {
 		return errors.Join(err, storage.ErrEventCantBeAdded)
 	}
 	return nil
 }
 
-func (s *Storage) DeleteEvent(eventUuid uuid.UUID) error {
-	_, err := s.db.Exec("DELETE FROM events WHERE id = $1", eventUuid)
+func (s *Storage) DeleteEvent(eventUUID uuid.UUID) error {
+	_, err := s.db.Exec("DELETE FROM events WHERE id = $1", eventUUID)
 	if err != nil {
 		return errors.Join(err, storage.ErrEventCantBeDeleted)
 	}
@@ -64,7 +63,7 @@ func (s *Storage) DeleteEvent(eventUuid uuid.UUID) error {
 
 func (s *Storage) UpdateEvent(event storage.Event) error {
 	if event.HasDifferentDate(event) {
-		events, err := s.GetUserEvents(event.UserId)
+		events, err := s.GetUserEvents(event.UserID)
 		if err != nil {
 			return err
 		}
@@ -101,7 +100,10 @@ func (s *Storage) GetEvents(fromDate, toDate time.Time) (storage.Schedule, error
 	var events storage.Schedule
 	for rows.Next() {
 		var event storage.Event
-		if err := rows.Scan(&event.ID, &event.UserId, &event.Title, &event.Description, &event.StartDate, &event.EndDate, &event.NotifyBefore); err != nil {
+		err := rows.Scan(
+			&event.ID, &event.UserID, &event.Title, &event.Description, &event.StartDate, &event.EndDate, &event.NotifyBefore,
+		)
+		if err != nil {
 			return nil, err
 		}
 		events = append(events, event)
@@ -109,8 +111,8 @@ func (s *Storage) GetEvents(fromDate, toDate time.Time) (storage.Schedule, error
 	return events, nil
 }
 
-func (s *Storage) GetUserEvents(userId uuid.UUID) (storage.Schedule, error) {
-	rows, err := s.db.Query("SELECT * FROM events WHERE user_id = $1", userId)
+func (s *Storage) GetUserEvents(userID uuid.UUID) (storage.Schedule, error) {
+	rows, err := s.db.Query("SELECT * FROM events WHERE user_id = $1", userID)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +145,10 @@ func (s *Storage) GetEventByID(id uuid.UUID) (storage.Event, error) {
 
 func parseEvent(rows *sql.Rows) (storage.Event, error) {
 	var event storage.Event
-	if err := rows.Scan(&event.ID, &event.UserId, &event.Title, &event.Description, &event.StartDate, &event.EndDate, &event.NotifyBefore); err != nil {
+	err := rows.Scan(
+		&event.ID, &event.UserID, &event.Title, &event.Description, &event.StartDate, &event.EndDate, &event.NotifyBefore,
+	)
+	if err != nil {
 		return storage.Event{}, err
 	}
 	return event, nil

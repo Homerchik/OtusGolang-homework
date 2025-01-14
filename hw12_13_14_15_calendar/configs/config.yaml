@@ -1,16 +1,17 @@
 logger:
-  level: "INFO"
+  level: "DEBUG"
+  format: ""
 
 http:
-  host: ""
-  port: 8080
+  host: "localhost"
+  port: 18080
 
 storage:
-  type: sql # possible values [in-memory, sql]
+  type: in-memory # possible values [in-memory, sql]
   sql:
     host: "localhost"
     port: 5432
-    db_name: "test"
+    dbName: "test"
     driver: "pgx"
     username: "postgres"
     password: "postgres"

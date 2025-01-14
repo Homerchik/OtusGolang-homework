@@ -1,9 +1,11 @@
 package logic
 
-import "github.com/homerchik/hw12_13_14_15_calendar/internal/storage"
-import "time"
-import "sort"
+import (
+	"sort"
+	"time"
 
+	"github.com/homerchik/hw12_13_14_15_calendar/internal/storage"
+)
 
 func EventAfterNow(event storage.Event) error {
 	if event.StartDate.Before(time.Now()) {
@@ -17,14 +19,14 @@ func EventFitsSchedule(event storage.Event, schedule storage.Schedule) error {
 		return nil
 	}
 	sort.Sort(schedule)
-	for _, schedEvent := range schedule {
-		if schedEvent.StartDate.Before(event.StartDate) && schedEvent.EndDate.Before(event.StartDate) {
+	for _, scheduleEvent := range schedule {
+		if scheduleEvent.StartDate.Before(event.StartDate) && scheduleEvent.EndDate.Before(event.StartDate) {
 			continue
-		} else if schedEvent.StartDate.After(event.StartDate) && schedEvent.StartDate.After(event.EndDate) {
-			return nil
-		} else {
-			return storage.ErrEventIntersection
 		}
+		if scheduleEvent.StartDate.After(event.StartDate) && scheduleEvent.StartDate.After(event.EndDate) {
+			return nil
+		}
+		return storage.ErrEventIntersection
 	}
 	return nil
 }
