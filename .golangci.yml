@@ -1,9 +1,5 @@
 run:
-  concurrency: 1
   tests: true
-  build-tags:
-    - bench
-    - !bench
 
 linters-settings:
   funlen:
