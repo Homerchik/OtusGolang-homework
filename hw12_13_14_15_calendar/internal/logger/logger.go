@@ -52,7 +52,7 @@ func (l Logger) Error(format string, a ...any) {
 }
 
 func (l Logger) PrintWithTime(format, level string, a ...any) {
-	format = strings.Join([]string{"%s", "%s", format, "\n"}, " ")
+	format = strings.Join([]string{format, "\n"}, " ")
 	timestamp := time.Now().UTC().Format(l.Layout)
 	msg := fmt.Sprintf(format, a...)
 	logLine := strings.Join([]string{timestamp, level, msg}, ": ")

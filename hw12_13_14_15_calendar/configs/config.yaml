@@ -7,7 +7,7 @@ http:
   port: 18080
 
 storage:
-  type: in-memory # possible values [in-memory, sql]
+  type: memory # possible values [memory, sql]
   sql:
     host: "localhost"
     port: 5432
