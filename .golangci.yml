@@ -1,7 +1,5 @@
 run:
   concurrency: 1
-  skip-dirs:
-    - vendor
   tests: true
   build-tags:
     - bench
@@ -28,6 +26,9 @@ issues:
         - dupl
         - gocyclo
         - gosec
+  exclude-dirs:
+    - vendor/
+
 
 linters:
   disable-all: true
