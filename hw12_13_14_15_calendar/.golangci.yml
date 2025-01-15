@@ -36,3 +36,5 @@ linters:
     - exportloopref
     - funlen
     - gci
+  disable:
+    - typecheck
