@@ -34,4 +34,3 @@ linters:
     - errorlint
     - exportloopref
     - funlen
-    - gci
