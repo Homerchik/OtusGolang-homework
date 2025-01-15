@@ -26,7 +26,7 @@ issues:
 linters:
   disable-all: true
   enable:
-- asciicheck
+    - asciicheck
     - depguard
     - dogsled
     - dupl
@@ -37,36 +37,36 @@ linters:
     - exportloopref
     - funlen
     - gci
-    # - gocognit
-    # - goconst
-    # - gocritic
-    # - gocyclo
-    # - godot
-    # - gofmt
-    # - gofumpt
-    # - goheader
-    # - goprintffuncname
-    # - gosec
-    # - gosimple
-    # - govet
-    # - importas
-    # - ineffassign
-    # - lll
-    # - makezero
-    # - misspell
-    # - nestif
-    # - nilerr
-    # - noctx
-    # - nolintlint
-    # - prealloc
-    # - predeclared
-    # - revive
-    # - staticcheck
-    # - stylecheck
-    # - tagliatelle
-    # - thelper
-    # - typecheck
-    # - unconvert
-    # - unparam
-    # - unused
-    # - whitespace
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - gofmt
+    - gofumpt
+    - goheader
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - importas
+    - ineffassign
+    - lll
+    - makezero
+    - misspell
+    - nestif
+    - nilerr
+    - noctx
+    - nolintlint
+    - prealloc
+    - predeclared
+    - revive
+    - staticcheck
+    - stylecheck
+    - tagliatelle
+    - thelper
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - whitespace
