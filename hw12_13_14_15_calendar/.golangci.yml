@@ -26,7 +26,7 @@ issues:
 linters:
   disable-all: true
   enable:
-- asciicheck
+    - asciicheck
     - depguard
     - dogsled
     - dupl
