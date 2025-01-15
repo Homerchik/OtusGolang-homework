@@ -26,39 +26,4 @@ issues:
 linters:
   disable-all: true
   enable:
-    - asciicheck
-    - depguard
-    - dogsled
-    - dupl
-    - bodyclose
-    - durationcheck
-    - errorlint
-    - exportloopref
-    - funlen
-    - gci
-    - gocognit
-    - goconst
-    - godot
-    - gofmt
-    - gofumpt
-    - goheader
-    - goprintffuncname
-    - gosec
-    - gosimple
-    - importas
-    - ineffassign
-    - lll
-    - makezero
-    - nestif
-    - nilerr
-    - noctx
-    - nolintlint
-    - predeclared
-    - staticcheck
-    - stylecheck
-    - tagliatelle
-    - thelper
-    - unconvert
-    - unparam
-    - unused
     - whitespace
