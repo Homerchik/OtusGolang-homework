@@ -16,7 +16,7 @@ import (
 	internalhttp "github.com/homerchik/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/homerchik/hw12_13_14_15_calendar/internal/storage/memory"
 	sqlstorage "github.com/homerchik/hw12_13_14_15_calendar/internal/storage/sql"
-	_ "github.com/lib/pq"	
+	_ "github.com/lib/pq"
 	"github.com/pressly/goose/v3"
 )
 
@@ -100,7 +100,7 @@ func prepareSQLStorage(ctx context.Context, config SQLConf, log app.Logger) (*sq
 	} else if migrateDowngrade {
 		command = "down"
 	}
-	if err := performMigration(dsn, config.Driver, command, migrationVersion, log); err != nil {
+	if err := performMigration(ctx, dsn, config.Driver, command, migrationVersion, log); err != nil {
 		return nil, err
 	}
 	sqlStorage := sqlstorage.New()
@@ -111,7 +111,7 @@ func prepareSQLStorage(ctx context.Context, config SQLConf, log app.Logger) (*sq
 	return sqlStorage, nil
 }
 
-func performMigration(dsn, driver, command, version string, log app.Logger) error {
+func performMigration(ctx context.Context, dsn, driver, command, version string, log app.Logger) error {
 	if version != "" {
 		command = fmt.Sprintf("%s-to", command)
 	}
@@ -127,7 +127,7 @@ func performMigration(dsn, driver, command, version string, log app.Logger) erro
 		}
 	}()
 
-	if err := goose.Run(command, db, "./migrations"); err != nil {
+	if err := goose.RunContext(ctx, command, db, "./migrations"); err != nil {
 		log.Error("goose %v: %v", command, err)
 		return ErrMigrationFailed
 	}
