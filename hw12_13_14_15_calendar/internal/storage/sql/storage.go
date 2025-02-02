@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/homerchik/hw12_13_14_15_calendar/internal/logic"
@@ -91,7 +90,7 @@ func (s *Storage) UpdateEvent(event storage.Event) error {
 	return nil
 }
 
-func (s *Storage) GetEvents(fromDate, toDate time.Time) (storage.Schedule, error) {
+func (s *Storage) GetEvents(fromDate, toDate int64) (storage.Schedule, error) {
 	rows, err := s.db.Query("SELECT * FROM events WHERE start_date >= $1 AND end_date <= $2", fromDate, toDate)
 	if err != nil {
 		return nil, err

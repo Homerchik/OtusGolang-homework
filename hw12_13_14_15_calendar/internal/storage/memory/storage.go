@@ -3,7 +3,6 @@ package memorystorage
 import (
 	"errors"
 	"sync"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/homerchik/hw12_13_14_15_calendar/internal/logic"
@@ -12,12 +11,12 @@ import (
 
 type Storage struct {
 	mu     *sync.RWMutex
-	Events map[time.Time]storage.Schedule
+	Events map[int64]storage.Schedule
 }
 
 func New() *Storage {
 	mu := &sync.RWMutex{}
-	return &Storage{mu, make(map[time.Time]storage.Schedule)}
+	return &Storage{mu, make(map[int64]storage.Schedule)}
 }
 
 func (s *Storage) AddEvent(event storage.Event) error {
@@ -72,10 +71,10 @@ func (s *Storage) UpdateEvent(event storage.Event) error {
 	return nil
 }
 
-func (s *Storage) GetEvents(fromDate, toDate time.Time) (storage.Schedule, error) {
+func (s *Storage) GetEvents(fromDate, toDate int64) (storage.Schedule, error) {
 	result := make(storage.Schedule, 0)
 	for date, events := range s.Events {
-		if date.After(fromDate) && date.Before(toDate) {
+		if date > fromDate && date < toDate {
 			result = append(result, events...)
 		}
 	}

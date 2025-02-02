@@ -8,7 +8,7 @@ import (
 )
 
 func EventAfterNow(event storage.Event) error {
-	if event.StartDate.Before(time.Now()) {
+	if event.StartDate < time.Now().Unix() {
 		return storage.ErrStartTimeBeforeNow
 	}
 	return nil
@@ -20,10 +20,10 @@ func EventFitsSchedule(event storage.Event, schedule storage.Schedule) error {
 	}
 	sort.Sort(schedule)
 	for _, scheduleEvent := range schedule {
-		if scheduleEvent.StartDate.Before(event.StartDate) && scheduleEvent.EndDate.Before(event.StartDate) {
+		if scheduleEvent.StartDate < event.StartDate && scheduleEvent.EndDate < event.StartDate {
 			continue
 		}
-		if scheduleEvent.StartDate.After(event.StartDate) && scheduleEvent.StartDate.After(event.EndDate) {
+		if scheduleEvent.StartDate > event.StartDate && scheduleEvent.StartDate > event.EndDate {
 			return nil
 		}
 		return storage.ErrEventIntersection

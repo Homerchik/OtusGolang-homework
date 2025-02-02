@@ -2,7 +2,6 @@ package storage
 
 import (
 	"errors"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -21,20 +20,20 @@ type Event struct {
 	Title        string
 	UserID       uuid.UUID
 	Description  string
-	StartDate    time.Time
-	EndDate      time.Time
+	StartDate    int64
+	EndDate      int64
 	NotifyBefore int
 }
 
-func NewEvent(userID uuid.UUID, title, description string, start, end time.Time, notifyBefore time.Duration) Event {
+func NewEvent(userID uuid.UUID, title, description string, start, end int64, notifyBefore int) Event {
 	return Event{
 		ID:           uuid.New(),
 		UserID:       userID,
 		Title:        title,
 		Description:  description,
-		StartDate:    start.UTC(),
-		EndDate:      end.UTC(),
-		NotifyBefore: int(notifyBefore.Seconds()),
+		StartDate:    start,
+		EndDate:      end,
+		NotifyBefore: notifyBefore,
 	}
 }
 
@@ -49,7 +48,7 @@ func (s Schedule) Len() int {
 }
 
 func (s Schedule) Less(i, j int) bool {
-	return s[i].StartDate.Before(s[j].StartDate)
+	return s[i].StartDate < s[j].StartDate
 }
 
 func (s Schedule) Swap(i, j int) {

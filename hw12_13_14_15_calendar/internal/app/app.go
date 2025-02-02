@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/homerchik/hw12_13_14_15_calendar/internal/storage"
@@ -24,7 +23,7 @@ type Storage interface {
 	AddEvent(event storage.Event) error
 	DeleteEvent(uuid uuid.UUID) error
 	UpdateEvent(event storage.Event) error
-	GetEvents(fromDate, toDate time.Time) (storage.Schedule, error)
+	GetEvents(fromDate, toDate int64) (storage.Schedule, error)
 }
 
 func New(logger Logger, storage Storage, addr string) *App {
