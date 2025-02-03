@@ -3,12 +3,11 @@ package app
 import (
 	"context"
 
-	"github.com/google/uuid"
-	"github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/storage"
+	"github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/models"
 )
 
 type App struct {
-	Storage Storage
+	Storage models.Storage
 	logger  Logger
 	addr    string
 }
@@ -19,14 +18,7 @@ type Logger interface {
 	Error(format string, a ...any)
 }
 
-type Storage interface {
-	AddEvent(event storage.Event) error
-	DeleteEvent(uuid uuid.UUID) error
-	UpdateEvent(event storage.Event) error
-	GetEvents(fromDate, toDate int64) (storage.Schedule, error)
-}
-
-func New(logger Logger, storage Storage, addr string) *App {
+func New(logger Logger, storage models.Storage, addr string) *App {
 	return &App{
 		storage, logger, addr,
 	}

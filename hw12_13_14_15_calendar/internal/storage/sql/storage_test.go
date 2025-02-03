@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/storage"
+	"github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/models"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 	"github.com/stretchr/testify/suite"
@@ -68,7 +68,7 @@ func (s *DBSuite) TeardownSuite() {
 
 func (s *DBSuite) TestEventAddedToEmptyStorage() {
 	startTime := time.Now().Unix()
-	event := storage.NewEvent(
+	event := models.NewEvent(
 		uuid.New(), "Event 1", "Description 1", startTime+3600, startTime+2*3600, 60,
 	)
 	err := s.SQLStorage.AddEvent(event)
@@ -81,14 +81,14 @@ func (s *DBSuite) TestEventAddedToEmptyStorage() {
 func (s *DBSuite) TestDeleteExistingEventOneForADate() {
 	userID := uuid.New()
 	startTime := time.Now().Unix()
-	events := storage.Schedule{
-		storage.NewEvent(
+	events := models.Schedule{
+		models.NewEvent(
 			userID, "Event 1", "Description 1", startTime+3600, startTime+2*3600, 60,
 		),
-		storage.NewEvent(
+		models.NewEvent(
 			userID, "Event 2", "Description 2", startTime+3*3600, startTime+4*3600, 60,
 		),
-		storage.NewEvent(
+		models.NewEvent(
 			userID, "Event 3", "Description 3", startTime+5*3600, startTime+6*3600, 60,
 		),
 	}
@@ -97,16 +97,16 @@ func (s *DBSuite) TestDeleteExistingEventOneForADate() {
 	}
 	s.NoError(s.SQLStorage.DeleteEvent(events[1].ID))
 	_, err := s.SQLStorage.GetEventByID(events[1].ID)
-	s.Error(err, storage.ErrNoEventFound)
+	s.Error(err, models.ErrNoEventFound)
 }
 
 func (s *DBSuite) TestEventUpdateSimpleFields() {
 	startTime := time.Now().Unix()
-	event := storage.NewEvent(
+	event := models.NewEvent(
 		uuid.New(), "Event 1", "Description 1", startTime+3600, startTime+2*3600, 60,
 	)
 	s.NoError(s.SQLStorage.AddEvent(event))
-	updatedEvent := storage.NewEvent(
+	updatedEvent := models.NewEvent(
 		event.UserID, "Better than event 1", "Simple Des",
 		startTime+3600, startTime+2*3600, 10*60,
 	)
@@ -120,14 +120,14 @@ func (s *DBSuite) TestEventUpdateSimpleFields() {
 func (s *DBSuite) TestEventUpdateDateFields() {
 	userID := uuid.New()
 	startTime := time.Now().Unix()
-	events := storage.Schedule{
-		storage.NewEvent(
+	events := models.Schedule{
+		models.NewEvent(
 			userID, "Event 1", "Description 1", startTime+3600, startTime+2*3600, 60,
 		),
-		storage.NewEvent(
+		models.NewEvent(
 			userID, "Event 2", "Description 2", startTime+3*3600, startTime+4*3600, 60,
 		),
-		storage.NewEvent(
+		models.NewEvent(
 			userID, "Event 3", "Description 3", startTime+5*3600, startTime+6*3600, 60,
 		),
 	}
@@ -135,7 +135,7 @@ func (s *DBSuite) TestEventUpdateDateFields() {
 		s.NoError(s.SQLStorage.AddEvent(event))
 	}
 	s.T().Run("Check start date is changed, it's possible", func(_ *testing.T) {
-		updatedEvent := storage.NewEvent(
+		updatedEvent := models.NewEvent(
 			userID, "Event 1", "Description 1", startTime+30*60, events[0].EndDate, 60,
 		)
 		updatedEvent.ID = events[0].ID
@@ -146,7 +146,7 @@ func (s *DBSuite) TestEventUpdateDateFields() {
 	})
 
 	s.T().Run("Check end date is changed, and it's possible", func(_ *testing.T) {
-		updatedEvent := storage.NewEvent(
+		updatedEvent := models.NewEvent(
 			userID, "Event 1", "Description 1", events[0].StartDate, events[0].EndDate-30*60, 60,
 		)
 		updatedEvent.ID = events[0].ID
