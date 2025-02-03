@@ -11,11 +11,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/homerchik/hw12_13_14_15_calendar/internal/app"
-	"github.com/homerchik/hw12_13_14_15_calendar/internal/logger"
-	internalhttp "github.com/homerchik/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/homerchik/hw12_13_14_15_calendar/internal/storage/memory"
-	sqlstorage "github.com/homerchik/hw12_13_14_15_calendar/internal/storage/sql"
+	"github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/app"
+	"github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/logger"
+	internalhttp "github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/server/http"
+	memorystorage "github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/storage/memory"
+	sqlstorage "github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/storage/sql"
 	_ "github.com/lib/pq"
 	"github.com/pressly/goose/v3"
 )

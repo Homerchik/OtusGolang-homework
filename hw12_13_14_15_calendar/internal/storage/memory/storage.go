@@ -5,8 +5,8 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/homerchik/hw12_13_14_15_calendar/internal/logic"
-	"github.com/homerchik/hw12_13_14_15_calendar/internal/storage"
+	"github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/logic"
+	"github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/storage"
 )
 
 type Storage struct {

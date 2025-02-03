@@ -6,8 +6,8 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
-	"github.com/homerchik/hw12_13_14_15_calendar/internal/logic"
-	"github.com/homerchik/hw12_13_14_15_calendar/internal/storage"
+	"github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/logic"
+	"github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/storage"
 	_ "github.com/jackc/pgx/v5/stdlib" // importing driver for pg
 )
 
@@ -28,6 +28,9 @@ func (s *Storage) Connect(_ context.Context, connStr string, driver string) erro
 }
 
 func (s *Storage) Close(_ context.Context) error {
+	if s.db == nil {
+		return nil 
+	}
 	if err := s.db.Close(); err != nil {
 		return err
 	}
@@ -106,6 +109,9 @@ func (s *Storage) GetEvents(fromDate, toDate int64) (storage.Schedule, error) {
 			return nil, err
 		}
 		events = append(events, event)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	return events, nil
 }

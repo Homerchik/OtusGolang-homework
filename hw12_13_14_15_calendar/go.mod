@@ -1,4 +1,4 @@
-module github.com/homerchik/hw12_13_14_15_calendar
+module github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar
 
 go 1.22
 
