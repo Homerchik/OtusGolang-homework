@@ -5,14 +5,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"                                       //nolint:depguard
-	"github.com/homerchik/hw12_13_14_15_calendar/internal/storage" //nolint:depguard
-	_ "github.com/jackc/pgx/v5/stdlib"                             //nolint:depguard
-	"github.com/pressly/goose/v3"                                  //nolint:depguard
+	"github.com/google/uuid"
+	"github.com/homerchik/hw12_13_14_15_calendar/internal/storage"
+	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/pressly/goose/v3"
 	"github.com/stretchr/testify/suite"
-	"github.com/testcontainers/testcontainers-go"                  //nolint:depguard
-	"github.com/testcontainers/testcontainers-go/modules/postgres" //nolint:depguard
-	"github.com/testcontainers/testcontainers-go/wait"             //nolint:depguard
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
+	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 type DBSuite struct {

@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"                                       //nolint:depguard
-	"github.com/homerchik/hw12_13_14_15_calendar/internal/storage" //nolint:depguard
+	"github.com/google/uuid"
+	"github.com/homerchik/hw12_13_14_15_calendar/internal/storage"
 	"github.com/stretchr/testify/require"
 )
 
