@@ -40,3 +40,22 @@ func CheckEvent(event models.Event, schedule models.Schedule) error {
 	}
 	return nil
 }
+
+func MergeEvents(basic, updated models.Event) models.Event {
+	if updated.Title != "" {
+		basic.Title = updated.Title
+	}
+	if updated.NotifyBefore != 0 {
+		basic.NotifyBefore = updated.NotifyBefore
+	}
+	if updated.Description != "" {
+		basic.Description = updated.Description
+	}
+	if updated.StartDate != 0 {
+		basic.StartDate = updated.StartDate
+	}
+	if updated.EndDate != 0 {
+		basic.EndDate = updated.EndDate
+	}
+	return basic
+}

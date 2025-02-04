@@ -3,13 +3,13 @@ package models
 import "github.com/google/uuid"
 
 type Event struct {
-	ID           uuid.UUID
-	Title        string
-	UserID       uuid.UUID
-	Description  string
-	StartDate    int64
-	EndDate      int64
-	NotifyBefore int
+	ID           uuid.UUID `json:"id,omitempty"`
+	Title        string    `json:"title"`
+	UserID       uuid.UUID `json:"userId"`
+	Description  string    `json:"description"`
+	StartDate    int64     `json:"startDate"`
+	EndDate      int64     `json:"endDate"`
+	NotifyBefore int       `json:"notifyBefore"`
 }
 
 func NewEvent(userID uuid.UUID, title, description string, start, end int64, notifyBefore int) Event {

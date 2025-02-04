@@ -37,3 +37,7 @@ func (a *App) GetAddr() string {
 func (a *App) GetLogger() Logger {
 	return a.logger
 }
+
+func (a *App) GetStorage() models.Storage {
+	return a.Storage
+}

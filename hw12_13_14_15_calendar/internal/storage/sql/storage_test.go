@@ -73,7 +73,7 @@ func (s *DBSuite) TestEventAddedToEmptyStorage() {
 	)
 	err := s.SQLStorage.AddEvent(event)
 	s.NoError(err)
-	eventFromDB, err := s.SQLStorage.GetEventByID(event.ID)
+	_, eventFromDB, err := s.SQLStorage.GetEventByID(event.ID)
 	s.NoError(err)
 	s.Equal(event, eventFromDB, "Fetched and pushed events are different")
 }
@@ -96,7 +96,7 @@ func (s *DBSuite) TestDeleteExistingEventOneForADate() {
 		s.NoError(s.SQLStorage.AddEvent(event))
 	}
 	s.NoError(s.SQLStorage.DeleteEvent(events[1].ID))
-	_, err := s.SQLStorage.GetEventByID(events[1].ID)
+	_, _, err := s.SQLStorage.GetEventByID(events[1].ID)
 	s.Error(err, models.ErrNoEventFound)
 }
 
@@ -112,7 +112,7 @@ func (s *DBSuite) TestEventUpdateSimpleFields() {
 	)
 	updatedEvent.ID = event.ID
 	s.NoError(s.SQLStorage.UpdateEvent(updatedEvent))
-	eventFromDB, err := s.SQLStorage.GetEventByID(event.ID)
+	_, eventFromDB, err := s.SQLStorage.GetEventByID(event.ID)
 	s.NoError(err)
 	s.Equal(updatedEvent, eventFromDB, "Fetched and pushed events are different")
 }
@@ -140,7 +140,7 @@ func (s *DBSuite) TestEventUpdateDateFields() {
 		)
 		updatedEvent.ID = events[0].ID
 		s.NoError(s.SQLStorage.UpdateEvent(updatedEvent))
-		eventFromDB, err := s.SQLStorage.GetEventByID(updatedEvent.ID)
+		_, eventFromDB, err := s.SQLStorage.GetEventByID(updatedEvent.ID)
 		s.NoError(err)
 		s.Equal(updatedEvent, eventFromDB, "Fetched and pushed events are different")
 	})
@@ -151,7 +151,7 @@ func (s *DBSuite) TestEventUpdateDateFields() {
 		)
 		updatedEvent.ID = events[0].ID
 		s.NoError(s.SQLStorage.UpdateEvent(updatedEvent))
-		eventFromDB, err := s.SQLStorage.GetEventByID(updatedEvent.ID)
+		_, eventFromDB, err := s.SQLStorage.GetEventByID(updatedEvent.ID)
 		s.NoError(err)
 		s.Equal(updatedEvent, eventFromDB, "Fetched and pushed events are different")
 	})

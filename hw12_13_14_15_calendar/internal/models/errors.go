@@ -9,4 +9,9 @@ var (
 	ErrEventCantBeAdded   = errors.New("event can't be added")
 	ErrEventCantBeUpdated = errors.New("event can't be updated")
 	ErrEventCantBeDeleted = errors.New("event can't be deleted")
+	ErrInternalDBError    = errors.New("internal db error")
 )
+
+type RestError struct {
+	Message string `json:"message"`
+}
