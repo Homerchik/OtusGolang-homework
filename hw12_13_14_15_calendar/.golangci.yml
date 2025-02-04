@@ -13,6 +13,8 @@ linters-settings:
         allow:
           - $gostd
           - github.com/stretchr
+          - github.com/google/uuid
+          - github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/storage
 
 issues:
   exclude-rules:
@@ -22,6 +24,7 @@ issues:
         - dupl
         - gocyclo
         - gosec
+        - depguard
 
 linters:
   disable-all: true
@@ -36,7 +39,6 @@ linters:
     - exhaustive
     - exportloopref
     - funlen
-    - gci
     - gocognit
     - goconst
     - gocritic
