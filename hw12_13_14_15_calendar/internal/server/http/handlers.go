@@ -14,6 +14,8 @@ type CalendarHandler struct {
 	storage models.Storage
 }
 
+var TimeFormat = "2006-01-02T15:04:05Z"
+
 func (h *CalendarHandler) Hello(w http.ResponseWriter, _ *http.Request) {
 	w.Write([]byte("Hello world!"))
 	time.Sleep(time.Second)
@@ -132,7 +134,6 @@ func (h *CalendarHandler) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 
 func (h *CalendarHandler) GetEventsForRange(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
-	timeFormat := "2006-01-02T15:04:05Z"
 	fromTS := params.Get("from")
 	toTS := params.Get("to")
 	if fromTS == "" || toTS == "" {
@@ -140,13 +141,13 @@ func (h *CalendarHandler) GetEventsForRange(w http.ResponseWriter, r *http.Reque
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	from, err := time.Parse(timeFormat, fromTS)
+	from, err := time.Parse(TimeFormat, fromTS)
 	if err != nil {
 		w.Write([]byte("Unsupported time format, please use iso8601"))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	to, err := time.Parse(timeFormat, toTS)
+	to, err := time.Parse(TimeFormat, toTS)
 	if err != nil {
 		w.Write([]byte("Unsupported time format, please use iso8601"))
 		w.WriteHeader(http.StatusBadRequest)

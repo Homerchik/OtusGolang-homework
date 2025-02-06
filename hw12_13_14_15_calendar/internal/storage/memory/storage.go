@@ -50,6 +50,7 @@ func (s *Storage) UpdateEvent(event models.Event) error {
 	if err != nil {
 		return err
 	}
+	event = logic.MergeEvents(e, event)
 	if e.ID != event.ID || e.UserID != event.UserID {
 		return models.ErrEventCantBeUpdated
 	}
