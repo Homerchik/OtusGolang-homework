@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -19,7 +20,8 @@ import (
 type HTTPSuite struct {
 	suite.Suite
 	Storage models.Storage
-	Handler *CalendarHandler
+	Server  Server
+	mux     *http.ServeMux
 }
 
 var (
@@ -29,19 +31,18 @@ var (
 
 func (s *HTTPSuite) SetupSuite() {
 	s.Storage = memorystorage.New()
-	s.Handler = &CalendarHandler{
-		storage: s.Storage,
-		logger:  logger.New("debug", ""),
-	}
+	s.mux = NewServer("localhost", logger.New("debug", ""), s.Storage).mux
 }
 
 func (s *HTTPSuite) TestCreateHandler() {
 	event := models.NewEvent(uuid.New(), "Event 1", "Best event", future+hour, future+2*hour, 60)
 	bytesEvent, err := json.Marshal(event)
 	s.Require().NoError(err)
-	r := httptest.NewRequest("POST", "/api/event", bytes.NewBuffer(bytesEvent))
+	r, err := http.NewRequest(http.MethodPost, "http://localhost/api/event", bytes.NewBuffer(bytesEvent))
+	s.Require().NoError(err)
 	w := httptest.NewRecorder()
-	s.Handler.CreateEvent(w, r)
+	s.mux.ServeHTTP(w, r)
+	// s.Handler.CreateEvent(w, r)
 	s.Require().Equal(201, w.Code)
 	id, err := uuid.Parse(strings.Split(w.Header().Get("Location"), "/")[3])
 	s.Require().NoError(err)
@@ -57,9 +58,10 @@ func (s *HTTPSuite) TestUpdateHandler() {
 	update, err := json.Marshal(map[string]interface{}{"title": "Event 2"})
 	s.Require().NoError(err)
 	event.Title = "Event 2"
-	r := httptest.NewRequest("PUT", "/api/events/"+event.ID.String(), bytes.NewBuffer(update))
+	r, err := http.NewRequest(http.MethodPut, "http://localhost/api/events/"+event.ID.String(), bytes.NewBuffer(update))
+	s.Require().NoError(err)
 	w := httptest.NewRecorder()
-	s.Handler.UpdateEvent(w, r)
+	s.mux.ServeHTTP(w, r)
 	s.Require().Equal(204, w.Code)
 	s.Require().Equal("/api/events/"+event.ID.String(), w.Header().Get("Location"))
 	_, eventFromStorage, err := s.Storage.GetEventByID(event.ID)
@@ -70,20 +72,22 @@ func (s *HTTPSuite) TestUpdateHandler() {
 func (s *HTTPSuite) TestDeleteHandler() {
 	event := models.NewEvent(uuid.New(), "Event 1", "Best event", future+hour, future+2*hour, 60)
 	s.Require().NoError(s.Storage.AddEvent(event))
-	r := httptest.NewRequest("DELETE", "/api/events/"+event.ID.String(), nil)
+	r, err := http.NewRequest(http.MethodDelete, "http://localhost/api/events/"+event.ID.String(), nil)
+	s.Require().NoError(err)
 	w := httptest.NewRecorder()
-	s.Handler.DeleteEvent(w, r)
+	s.mux.ServeHTTP(w, r)
 	s.Require().Equal(204, w.Code)
-	_, _, err := s.Storage.GetEventByID(event.ID)
+	_, _, err = s.Storage.GetEventByID(event.ID)
 	s.Require().Error(err)
 }
 
 func (s *HTTPSuite) TestGetEventHandler() {
 	event := models.NewEvent(uuid.New(), "Event 1", "Best event", future+hour, future+2*hour, 60)
 	s.Require().NoError(s.Storage.AddEvent(event))
-	r := httptest.NewRequest("GET", "/api/events/"+event.ID.String(), nil)
+	r, err := http.NewRequest(http.MethodGet, "http://localhost/api/events/"+event.ID.String(), nil)
+	s.Require().NoError(err)
 	w := httptest.NewRecorder()
-	s.Handler.GetEvent(w, r)
+	s.mux.ServeHTTP(w, r)
 	s.Require().Equal(200, w.Code)
 	var eventFromResponse *models.Event
 	s.Require().NoError(json.Unmarshal(w.Body.Bytes(), &eventFromResponse))
@@ -103,9 +107,12 @@ func (s *HTTPSuite) TestGetEventsHandler() {
 	}
 	fromTS := time.Now().UTC().Add(11 * time.Hour).Format(TimeFormat)
 	toTS := time.Now().UTC().Add(14 * time.Hour).Format(TimeFormat)
-	r := httptest.NewRequest("GET", fmt.Sprintf("/api/events?from=%s&to=%s", fromTS, toTS), nil)
+	r, err := http.NewRequest(
+		http.MethodGet, fmt.Sprintf("http://localhost/api/events?from=%s&to=%s", fromTS, toTS), nil,
+	)
+	s.Require().NoError(err)
 	w := httptest.NewRecorder()
-	s.Handler.GetEventsForRange(w, r)
+	s.mux.ServeHTTP(w, r)
 	s.Require().Equal(200, w.Code)
 	var eventFromResponse map[string]models.Schedule
 	s.Require().NoError(json.Unmarshal(w.Body.Bytes(), &eventFromResponse))

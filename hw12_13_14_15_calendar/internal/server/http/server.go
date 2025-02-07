@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/app"
 	"github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/models"
 )
 
@@ -23,23 +22,16 @@ type Logger interface {
 	Error(format string, a ...any)
 }
 
-type Application interface {
-	GetAddr() string
-	GetLogger() app.Logger
-	GetStorage() models.Storage
-}
-
-func NewServer(app Application) *Server {
-	logger := app.GetLogger()
+func NewServer(addr string, logger Logger, storage models.Storage) *Server {
 	mux := http.NewServeMux()
-	handler := &CalendarHandler{logger, app.GetStorage()}
+	handler := &CalendarHandler{logger, storage}
 	mux.HandleFunc("/", loggingMiddleware(logger, handler.Hello))
 	mux.HandleFunc("POST /api/event", loggingMiddleware(logger, handler.CreateEvent))
-	mux.HandleFunc("GET /api/events/", loggingMiddleware(logger, handler.GetEvent))
+	mux.HandleFunc("GET /api/events/{id}", loggingMiddleware(logger, handler.GetEvent))
 	mux.HandleFunc("GET /api/events", loggingMiddleware(logger, handler.GetEventsForRange))
-	mux.HandleFunc("PUT /api/events/", loggingMiddleware(logger, handler.UpdateEvent))
-	mux.HandleFunc("DELETE /api/events/", loggingMiddleware(logger, handler.DeleteEvent))
-	return &Server{app.GetAddr(), nil, logger, mux, nil}
+	mux.HandleFunc("PUT /api/events/{id}", loggingMiddleware(logger, handler.UpdateEvent))
+	mux.HandleFunc("DELETE /api/events/{id}", loggingMiddleware(logger, handler.DeleteEvent))
+	return &Server{addr, nil, logger, mux, nil}
 }
 
 func (s *Server) Start(ctx context.Context) error {

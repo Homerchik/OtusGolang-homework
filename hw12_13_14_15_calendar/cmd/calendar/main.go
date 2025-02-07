@@ -11,7 +11,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/app"
 	"github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/config"
 	"github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/logger"
 	"github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/models"
@@ -65,8 +64,8 @@ func main() {
 		os.Exit(1) //nolint:gocritic
 	}
 
-	calendar := app.New(log, storage, fmt.Sprintf("%s:%v", config.HTTP.Host, config.HTTP.Port))
-	server := internalhttp.NewServer(calendar)
+	addr := fmt.Sprintf("%s:%v", config.HTTP.Host, config.HTTP.Port)
+	server := internalhttp.NewServer(addr, log, storage)
 
 	go func() {
 		<-ctx.Done()

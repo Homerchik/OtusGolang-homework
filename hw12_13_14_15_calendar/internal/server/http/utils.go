@@ -5,9 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"strings"
 
-	"github.com/google/uuid"
 	"github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/models"
 )
 
@@ -33,13 +31,14 @@ func WriteJSON(w io.Writer, v interface{}) error {
 	return nil
 }
 
-func SendError(w http.ResponseWriter, message string, code int) error {
+func SendError(w http.ResponseWriter, message string, err error, log Logger) {
+	log.Error(message + ":" + err.Error())
+	code := MatchHTTPCode(err)
 	errorMsg := models.RestError{Message: message}
 	w.WriteHeader(code)
 	if err := WriteJSON(w, errorMsg); err != nil {
-		return err
+		log.Error("error sending error" + err.Error())
 	}
-	return nil
 }
 
 func MatchHTTPCode(err error) int {
@@ -62,19 +61,4 @@ func MatchHTTPCode(err error) int {
 		return http.StatusInternalServerError
 	}
 	return http.StatusOK
-}
-
-func GetIDFromPath(path string) (uuid.UUID, error) {
-	var (
-		id  uuid.UUID
-		err error
-	)
-	parts := strings.Split(path, "/")
-	if len(parts) != 4 || parts[3] == "" {
-		return uuid.Nil, errors.New("invalid path")
-	}
-	if id, err = uuid.Parse(parts[3]); err != nil {
-		return uuid.Nil, err
-	}
-	return id, nil
 }

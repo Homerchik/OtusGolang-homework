@@ -25,6 +25,7 @@ issues:
         - gocyclo
         - gosec
         - depguard
+        - noctx
 
 linters:
   disable-all: true

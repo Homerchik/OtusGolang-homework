@@ -22,51 +22,39 @@ func (h *CalendarHandler) Hello(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (h *CalendarHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
-	var (
-		event   *models.Event
-		message string
-		err     error
-	)
+	var event *models.Event
 	defer r.Body.Close()
-	if err = ReadAndUnmarshalJSON(r.Body, &event); err != nil {
-		message = "failed to unmarshal event" + err.Error()
-		err = models.ErrEventCantBeAdded
-		h.logger.Error(message)
-	} else {
-		event.ID = uuid.New()
-		if err = h.storage.AddEvent(*event); err != nil {
-			message = "error adding event"
-			h.logger.Error(message + err.Error())
-		} else {
-			w.Header().Add("Location", "/api/events/"+event.ID.String())
-			w.WriteHeader(http.StatusCreated)
-		}
+	if err := ReadAndUnmarshalJSON(r.Body, &event); err != nil {
+		SendError(w, "failed to unmarshal event"+err.Error(), models.ErrEventCantBeAdded, h.logger)
+		return
 	}
-	if err != nil {
-		code := MatchHTTPCode(err)
-		if err := SendError(w, message, code); err != nil {
-			h.logger.Error("error sending error" + err.Error())
-		}
+	event.ID = uuid.New()
+	if err := h.storage.AddEvent(*event); err != nil {
+		SendError(w, "error adding event", err, h.logger)
+		return
 	}
+	w.Header().Add("Location", "/api/events/"+event.ID.String())
+	w.WriteHeader(http.StatusCreated)
 }
 
 func (h *CalendarHandler) GetEvent(w http.ResponseWriter, r *http.Request) {
 	var (
-		id  uuid.UUID
-		err error
+		id    uuid.UUID
+		err   error
+		event models.Event
 	)
-	if id, err = GetIDFromPath(r.URL.Path); err != nil {
+
+	if id, err = uuid.Parse(r.PathValue("id")); err != nil {
 		w.WriteHeader(http.StatusNotFound)
+		SendError(w, "wrong uuid has gotten", err, h.logger)
+		return
 	}
-	if _, event, err := h.storage.GetEventByID(id); err != nil {
-		code := MatchHTTPCode(err)
-		if err := SendError(w, err.Error(), code); err != nil {
-			h.logger.Error("error sending error" + err.Error())
-		}
-	} else {
-		if err := WriteJSON(w, event); err != nil {
-			h.logger.Error("error writing json" + err.Error())
-		}
+	if _, event, err = h.storage.GetEventByID(id); err != nil {
+		SendError(w, "error sending error", err, h.logger)
+		return
+	}
+	if err := WriteJSON(w, event); err != nil {
+		h.logger.Error("error writing json" + err.Error())
 	}
 }
 
@@ -79,39 +67,31 @@ func (h *CalendarHandler) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 	)
 	defer r.Body.Close()
 
-	if id, err = GetIDFromPath(r.URL.Path); err != nil {
+	if id, err = uuid.Parse(r.PathValue("id")); err != nil {
 		w.WriteHeader(http.StatusNotFound)
+		SendError(w, "wrong uuid has gotten", err, h.logger)
+		return
 	}
 
 	if err = ReadAndUnmarshalJSON(r.Body, &event); err != nil {
-		message = "failed to unmarshal event" + err.Error()
-		err = models.ErrEventCantBeUpdated
 		h.logger.Error(message)
-	} else {
-		if event.ID != uuid.Nil && event.ID != id {
-			err = models.ErrEventCantBeUpdated
-			message = "event ID in path and body are different"
-			goto ErrorLabel
-		}
-		event.ID = id
-
-		if err = h.storage.UpdateEvent(*event); err != nil {
-			message = "error updating event"
-			h.logger.Error(message + err.Error())
-			goto ErrorLabel
-		}
-
-		w.Header().Add("Location", "/api/events/"+id.String())
-		w.WriteHeader(http.StatusNoContent)
+		SendError(w, "failed to unmarshal event"+err.Error(), models.ErrEventCantBeUpdated, h.logger)
+		return
+	}
+	if event.ID != uuid.Nil && event.ID != id {
+		SendError(w, "event ID in path and body are different", models.ErrEventCantBeUpdated, h.logger)
+		return
 	}
 
-ErrorLabel:
-	if err != nil {
-		code := MatchHTTPCode(err)
-		if err := SendError(w, message, code); err != nil {
-			h.logger.Error("error sending error" + err.Error())
-		}
+	event.ID = id
+
+	if err = h.storage.UpdateEvent(*event); err != nil {
+		SendError(w, "error updating event", err, h.logger)
+		return
 	}
+
+	w.Header().Add("Location", "/api/events/"+id.String())
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *CalendarHandler) DeleteEvent(w http.ResponseWriter, r *http.Request) {
@@ -119,14 +99,13 @@ func (h *CalendarHandler) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 		id  uuid.UUID
 		err error
 	)
-	if id, err = GetIDFromPath(r.URL.Path); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+	if id, err = uuid.Parse(r.PathValue("id")); err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		SendError(w, "wrong uuid has gotten", err, h.logger)
+		return
 	}
 	if err = h.storage.DeleteEvent(id); err != nil {
-		code := MatchHTTPCode(err)
-		if err = SendError(w, err.Error(), code); err != nil {
-			h.logger.Error("error sending error" + err.Error())
-		}
+		SendError(w, "", err, h.logger)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -154,10 +133,7 @@ func (h *CalendarHandler) GetEventsForRange(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	if events, err := h.storage.GetEvents(from.Unix(), to.Unix()); err != nil {
-		code := MatchHTTPCode(err)
-		if err := SendError(w, err.Error(), code); err != nil {
-			h.logger.Error("error sending error" + err.Error())
-		}
+		SendError(w, "", err, h.logger)
 	} else {
 		if err := WriteJSON(w, map[string]models.Schedule{"data": events}); err != nil {
 			h.logger.Error("error writing json" + err.Error())
