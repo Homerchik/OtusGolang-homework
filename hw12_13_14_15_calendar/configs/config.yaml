@@ -6,6 +6,9 @@ http:
   host: "localhost"
   port: 18080
 
+grpc:
+  port: 18090
+
 storage:
   type: sql # possible values [memory, sql]
   sql:
