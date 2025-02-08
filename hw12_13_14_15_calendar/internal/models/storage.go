@@ -7,4 +7,5 @@ type Storage interface {
 	DeleteEvent(uuid uuid.UUID) error
 	UpdateEvent(event Event) error
 	GetEvents(fromDate, toDate int64) (Schedule, error)
+	GetEventByID(eventUUID uuid.UUID) (int, Event, error)
 }

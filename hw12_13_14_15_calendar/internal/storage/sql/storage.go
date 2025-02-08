@@ -50,7 +50,7 @@ func (s *Storage) AddEvent(event models.Event) error {
 			"VALUES ($1, $2, $3, $4, $5, $6, $7)",
 		event.ID, event.UserID, event.Title, event.Description, event.StartDate, event.EndDate, event.NotifyBefore,
 	); err != nil {
-		return errors.Join(err, models.ErrEventCantBeAdded)
+		return errors.Join(err, models.ErrEventCantBeAdded, models.ErrInternalDBError)
 	}
 	return nil
 }
@@ -58,12 +58,19 @@ func (s *Storage) AddEvent(event models.Event) error {
 func (s *Storage) DeleteEvent(eventUUID uuid.UUID) error {
 	_, err := s.db.Exec("DELETE FROM events WHERE id = $1", eventUUID)
 	if err != nil {
-		return errors.Join(err, models.ErrEventCantBeDeleted)
+		return errors.Join(err, models.ErrEventCantBeDeleted, models.ErrInternalDBError)
 	}
 	return nil
 }
 
 func (s *Storage) UpdateEvent(event models.Event) error {
+	var (
+		basicEvent models.Event
+		err        error
+	)
+	if _, basicEvent, err = s.GetEventByID(event.ID); err != nil {
+		return err
+	}
 	if event.HasDifferentDate(event) {
 		events, err := s.GetUserEvents(event.UserID)
 		if err != nil {
@@ -83,12 +90,13 @@ func (s *Storage) UpdateEvent(event models.Event) error {
 			return errors.Join(err, models.ErrEventCantBeUpdated)
 		}
 	}
-	_, err := s.db.Exec(
+	event = logic.MergeEvents(basicEvent, event)
+	_, err = s.db.Exec(
 		"UPDATE events SET title = $1, description = $2, start_date = $3, end_date = $4, notify_before = $5 WHERE id = $6",
 		event.Title, event.Description, event.StartDate, event.EndDate, event.NotifyBefore, event.ID,
 	)
 	if err != nil {
-		return errors.Join(err, models.ErrEventCantBeUpdated)
+		return errors.Join(err, models.ErrEventCantBeUpdated, models.ErrInternalDBError)
 	}
 	return nil
 }
@@ -106,7 +114,7 @@ func (s *Storage) GetEvents(fromDate, toDate int64) (models.Schedule, error) {
 			&event.ID, &event.UserID, &event.Title, &event.Description, &event.StartDate, &event.EndDate, &event.NotifyBefore,
 		)
 		if err != nil {
-			return nil, err
+			return nil, errors.Join(err, models.ErrInternalDBError)
 		}
 		events = append(events, event)
 	}
@@ -119,7 +127,7 @@ func (s *Storage) GetEvents(fromDate, toDate int64) (models.Schedule, error) {
 func (s *Storage) GetUserEvents(userID uuid.UUID) (models.Schedule, error) {
 	rows, err := s.db.Query("SELECT * FROM events WHERE user_id = $1", userID)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(err, models.ErrInternalDBError)
 	}
 	defer rows.Close()
 	var events models.Schedule
@@ -133,19 +141,19 @@ func (s *Storage) GetUserEvents(userID uuid.UUID) (models.Schedule, error) {
 	return events, nil
 }
 
-func (s *Storage) GetEventByID(id uuid.UUID) (models.Event, error) {
+func (s *Storage) GetEventByID(id uuid.UUID) (int, models.Event, error) {
 	row, err := s.db.Query("SELECT * FROM events WHERE id = $1", id)
 	if err != nil {
-		return models.Event{}, err
+		return 0, models.Event{}, err
 	}
 	if row.Next() {
 		event, err := parseEvent(row)
 		if err != nil {
-			return models.Event{}, err
+			return 0, models.Event{}, errors.Join(err, models.ErrInternalDBError)
 		}
-		return event, nil
+		return 0, event, nil
 	}
-	return models.Event{}, models.ErrNoEventFound
+	return 0, models.Event{}, models.ErrNoEventFound
 }
 
 func parseEvent(rows *sql.Rows) (models.Event, error) {
@@ -154,7 +162,7 @@ func parseEvent(rows *sql.Rows) (models.Event, error) {
 		&event.ID, &event.UserID, &event.Title, &event.Description, &event.StartDate, &event.EndDate, &event.NotifyBefore,
 	)
 	if err != nil {
-		return models.Event{}, err
+		return models.Event{}, errors.Join(err, models.ErrInternalDBError)
 	}
 	return event, nil
 }

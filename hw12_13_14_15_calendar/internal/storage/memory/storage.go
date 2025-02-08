@@ -32,7 +32,7 @@ func (s *Storage) AddEvent(event models.Event) error {
 func (s *Storage) DeleteEvent(eventUUID uuid.UUID) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	idx, event, err := s.GetEvent(eventUUID)
+	idx, event, err := s.GetEventByID(eventUUID)
 	if err != nil {
 		return errors.Join(err, models.ErrEventCantBeDeleted)
 	}
@@ -46,10 +46,11 @@ func (s *Storage) DeleteEvent(eventUUID uuid.UUID) error {
 func (s *Storage) UpdateEvent(event models.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	idx, e, err := s.GetEvent(event.ID)
+	idx, e, err := s.GetEventByID(event.ID)
 	if err != nil {
 		return err
 	}
+	event = logic.MergeEvents(e, event)
 	if e.ID != event.ID || e.UserID != event.UserID {
 		return models.ErrEventCantBeUpdated
 	}
@@ -60,7 +61,7 @@ func (s *Storage) UpdateEvent(event models.Event) error {
 			return errors.Join(err, models.ErrEventCantBeUpdated)
 		}
 		if err := s.AddEvent(event); err != nil {
-			s.AddEvent(*e) // If we failed to add new event, return old one
+			s.AddEvent(e) // If we failed to add new event, return old one
 			s.mu.Lock()
 			return err
 		}
@@ -93,13 +94,13 @@ func (s *Storage) GetUserEvents(userID uuid.UUID) models.Schedule {
 	return schedule
 }
 
-func (s *Storage) GetEvent(eventUUID uuid.UUID) (int, *models.Event, error) {
+func (s *Storage) GetEventByID(eventUUID uuid.UUID) (int, models.Event, error) {
 	for _, events := range s.Events {
 		for i, event := range events {
 			if event.ID == eventUUID {
-				return i, &event, nil
+				return i, event, nil
 			}
 		}
 	}
-	return -1, nil, models.ErrNoEventFound
+	return -1, models.Event{}, models.ErrNoEventFound
 }

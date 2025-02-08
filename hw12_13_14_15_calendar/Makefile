@@ -37,4 +37,13 @@ install-lint-deps:
 lint: install-lint-deps
 	golangci-lint run ./... -v
 
-.PHONY: build run build-img run-img version test lint
+generate:
+	rm -rf ./internal/server/protobuf/pb
+	mkdir -p ./internal/server/protobuf/pb
+
+	protoc \
+		--go_out=./internal/server/protobuf \
+		--go-grpc_out=./internal/server/protobuf \
+		./api/*.proto
+
+.PHONY: build run build-img run-img version test lint generate

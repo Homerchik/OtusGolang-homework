@@ -2,6 +2,64 @@ syntax = "proto3";
 
 package event;
 
+option go_package = "./pb";
+
+import "google/protobuf/timestamp.proto";
+
+service Calendar {
+    rpc AddEvent (AddEventReq) returns (AddEventResp) {}
+    rpc UpdateEvent (UpdateEventReq) returns (UpdateEventResp) {}
+    rpc DeleteEvent (DeleteEventReq) returns (DeleteEventResp) {}
+    rpc GetEvent (GetEventReq) returns (GetEventResp) {}
+    rpc GetEvents (GetEventsReq) returns (GetEventsResp) {}
+}
+
 message Event {
-    // TODO
+    string id = 1;
+    string title = 2;
+    string user_id = 3;
+    string description = 4;
+    google.protobuf.Timestamp start_date = 5;
+    google.protobuf.Timestamp end_date = 6;
+    int64 notify_before = 7;
+}
+
+message AddEventReq {
+    Event event = 1;
+}
+
+message AddEventResp {
+    string id = 1;
+}
+
+message UpdateEventReq {
+    Event event = 1;
+}
+
+message UpdateEventResp {
+    string id = 1;
+}
+
+message DeleteEventReq {
+    string id = 1;
+}
+
+message DeleteEventResp {
+}
+
+message GetEventReq {
+    string id = 1;
+}
+
+message GetEventResp {
+    Event event = 1;
+}
+
+message GetEventsReq {
+    string from = 1;
+    string to = 2;
+}
+
+message GetEventsResp {
+    repeated Event events = 1;
 }
