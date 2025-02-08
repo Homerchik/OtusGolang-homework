@@ -3,17 +3,15 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/config"
 	"github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/logger"
 	"github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/models"
-	internalhttp "github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/server/http"
+	"github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/rabbit"
 	genstorage "github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/storage"
 	sqlstorage "github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/storage/sql"
 	_ "github.com/lib/pq"
@@ -22,7 +20,7 @@ import (
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "/etc/scheduler/config.toml", "Path to configuration file")
 }
 
 func main() {
@@ -56,24 +54,17 @@ func main() {
 		os.Exit(1) //nolint:gocritic
 	}
 
-	addr := fmt.Sprintf("%s:%v", config.HTTP.Host, config.HTTP.Port)
-	server := internalhttp.NewServer(addr, log, storage)
+	addr := rabbit.BuildAMQPUrl(
+		config.AMQP.Host, config.AMQP.Port, config.AMQP.Username, config.AMQP.Password,
+	)
+	server := rabbit.NewScheduler(
+		config.Scheduler.ScanEvery, config.Scheduler.MaxNotifyBefore,
+		config.Scheduler.DeleteEvery, config.Scheduler.DeleteOlderThan,
+		storage, log,
+	)
 
-	go func() {
-		<-ctx.Done()
-
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
-		defer cancel()
-
-		if err := server.Stop(ctx); err != nil {
-			log.Error("failed to stop http server: " + err.Error())
-		}
-	}()
-
-	log.Info("calendar is running...")
-
-	if err := server.Start(ctx); err != nil {
-		log.Error("failed to start http server: " + err.Error())
+	if err := server.Run(ctx, addr, config.AMQP.QueueName); err != nil {
+		log.Error("failed to run scheduler: " + err.Error())
 		cancel()
 		os.Exit(1)
 	}

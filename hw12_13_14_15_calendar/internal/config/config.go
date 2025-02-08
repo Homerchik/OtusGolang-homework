@@ -11,10 +11,12 @@ import (
 // Организация конфига в main принуждает нас сужать API компонентов, использовать
 // при их конструировании только необходимые параметры, а также уменьшает вероятность циклической зависимости.
 type Config struct {
-	Logger  LoggerConf `yaml:"logger"`
-	HTTP    HTTPConf   `yaml:"http"`
-	Storage Storage    `yaml:"storage"`
-	GRPC    GRPCConf   `yaml:"grpc"`
+	Logger    LoggerConf `yaml:"logger"`
+	HTTP      HTTPConf   `yaml:"http"`
+	Storage   Storage    `yaml:"storage"`
+	GRPC      GRPCConf   `yaml:"grpc"`
+	AMQP      AMQPConf   `yaml:"amqp"`
+	Scheduler Scheduler  `yaml:"scheduler"`
 }
 
 type LoggerConf struct {
@@ -43,6 +45,21 @@ type SQLConf struct {
 	Driver   string `yaml:"driver"`
 	Username string `yaml:"username"`
 	Password string `yaml:"password"`
+}
+
+type AMQPConf struct {
+	Host      string `yaml:"host"`
+	Port      int    `yaml:"port"`
+	Username  string `yaml:"username"`
+	Password  string `yaml:"password"`
+	QueueName string `yaml:"queueName"`
+}
+
+type Scheduler struct {
+	MaxNotifyBefore int64 `yaml:"maxNotifyBefore"`
+	ScanEvery       int64 `yaml:"scanEvery"`
+	DeleteOlderThan int64 `yaml:"deleteOlderThan"`
+	DeleteEvery     int64 `yaml:"deleteEvery"`
 }
 
 func NewConfig(filepath string) (Config, error) {

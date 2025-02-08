@@ -9,6 +9,13 @@ http:
 grpc:
   port: 18090
 
+amqp:
+  host: "localhost"
+  port: 5672
+  user: ""
+  password: ""  
+  queueName: "Notifications"
+
 storage:
   type: sql # possible values [memory, sql]
   sql:
@@ -19,3 +26,8 @@ storage:
     username: "postgres"
     password: "postgres"
 
+scheduler:
+  maxNotifyBefore: 86400 # in seconds
+  scanEvery: 10 # in seconds
+  deleteOlderThan: 360 # in seconds
+  deleteEvery: 60 # in seconds
