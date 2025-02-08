@@ -42,7 +42,6 @@ func (s *HTTPSuite) TestCreateHandler() {
 	s.Require().NoError(err)
 	w := httptest.NewRecorder()
 	s.mux.ServeHTTP(w, r)
-	// s.Handler.CreateEvent(w, r)
 	s.Require().Equal(201, w.Code)
 	id, err := uuid.Parse(strings.Split(w.Header().Get("Location"), "/")[3])
 	s.Require().NoError(err)

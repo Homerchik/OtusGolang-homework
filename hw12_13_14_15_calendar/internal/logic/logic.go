@@ -1,6 +1,7 @@
 package logic
 
 import (
+	"fmt"
 	"sort"
 	"time"
 
@@ -8,7 +9,9 @@ import (
 )
 
 func EventAfterNow(event models.Event) error {
-	if event.StartDate < time.Now().Unix() {
+	if event.StartDate < time.Now().UTC().Unix() {
+		fmt.Println(event.StartDate)
+		fmt.Println(time.Now().UTC().Unix())
 		return models.ErrStartTimeBeforeNow
 	}
 	return nil
@@ -58,4 +61,8 @@ func MergeEvents(basic, updated models.Event) models.Event {
 		basic.EndDate = updated.EndDate
 	}
 	return basic
+}
+
+func BuildNotification(e models.Event) models.Notification {
+	return models.Notification{ID: e.ID, UserID: e.UserID, Title: e.Title, Date: e.StartDate}
 }
