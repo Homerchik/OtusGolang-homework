@@ -1,7 +1,6 @@
 package logic
 
 import (
-	"fmt"
 	"sort"
 	"time"
 
@@ -10,8 +9,6 @@ import (
 
 func EventAfterNow(event models.Event) error {
 	if event.StartDate < time.Now().UTC().Unix() {
-		fmt.Println(event.StartDate)
-		fmt.Println(time.Now().UTC().Unix())
 		return models.ErrStartTimeBeforeNow
 	}
 	return nil

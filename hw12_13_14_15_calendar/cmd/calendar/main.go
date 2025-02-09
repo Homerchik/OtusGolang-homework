@@ -15,7 +15,6 @@ import (
 	"github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/models"
 	internalhttp "github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/server/http"
 	genstorage "github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/storage"
-	sqlstorage "github.com/homerchik/OtusGolang-homework/hw12_13_14_15_calendar/internal/storage/sql"
 	_ "github.com/lib/pq"
 )
 
@@ -43,18 +42,12 @@ func main() {
 	var storage models.Storage
 
 	storage, err = genstorage.NewStorage(ctx, log, config.Storage)
-	defer func() {
-		if config.Storage.Type == "sql" {
-			if err := storage.(*sqlstorage.Storage).Close(ctx); err != nil {
-				log.Error("failed to close storage: " + err.Error())
-			}
-		}
-	}()
 	if err != nil {
 		log.Error("failed to create storage: " + err.Error())
 		cancel()
 		os.Exit(1) //nolint:gocritic
 	}
+	defer storage.Close(ctx)
 
 	addr := fmt.Sprintf("%s:%v", config.HTTP.Host, config.HTTP.Port)
 	server := internalhttp.NewServer(addr, log, storage)

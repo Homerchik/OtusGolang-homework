@@ -1,6 +1,7 @@
 package memorystorage
 
 import (
+	"context"
 	"errors"
 	"sync"
 
@@ -17,6 +18,10 @@ type Storage struct {
 func New() *Storage {
 	mu := &sync.RWMutex{}
 	return &Storage{mu, make(map[int64]models.Schedule)}
+}
+
+func (s *Storage) Close(_ context.Context) error {
+	return nil
 }
 
 func (s *Storage) AddEvent(event models.Event) error {
