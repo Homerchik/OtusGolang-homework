@@ -45,7 +45,6 @@ func (s *Scheduler) Run(ctx context.Context, amqpURL, queueName string) error {
 	}()
 
 	go s.scanDB(ctx, ch)
-
 	for {
 		select {
 		case <-ctx.Done():

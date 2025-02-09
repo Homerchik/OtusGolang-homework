@@ -29,7 +29,6 @@ func main() {
 		printVersion()
 		return
 	}
-
 	config, err := config.NewConfig(configFile)
 	if err != nil {
 		log.Fatalf("Can't parse config file, %v, exiting...", err)
