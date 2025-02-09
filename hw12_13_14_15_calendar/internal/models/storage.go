@@ -1,6 +1,10 @@
 package models
 
-import "github.com/google/uuid"
+import (
+	"context"
+
+	"github.com/google/uuid"
+)
 
 type Storage interface {
 	AddEvent(event Event) error
@@ -8,4 +12,5 @@ type Storage interface {
 	UpdateEvent(event Event) error
 	GetEvents(fromDate, toDate int64) (Schedule, error)
 	GetEventByID(eventUUID uuid.UUID) (int, Event, error)
+	Close(ctx context.Context) error
 }

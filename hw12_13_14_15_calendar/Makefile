@@ -1,14 +1,25 @@
-BIN := "./bin/calendar"
+CALENDAR_BIN := "./bin/calendar"
+SCHEDULER_BIN := "./bin/scheduler"
+SENDER_BIN := "./bin/sender"
+
 DOCKER_IMG="calendar:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
 
 build:
-	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+	go build -v -o $(CALENDAR_BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+	go build -v -o $(SCHEDULER_BIN) -ldflags "$(LDFLAGS)" ./cmd/scheduler
+	go build -v -o $(SENDER_BIN) -ldflags "$(LDFLAGS)" ./cmd/sender
 
 run: build
-	$(BIN) -config ./configs/config.yaml
+	$(CALENDAR_BIN) -config ./configs/config.yaml
+
+run-scheduler: build
+	$(SCHEDULER_BIN) -config ./configs/config.yaml
+
+run-sender: build
+	$(SENDER_BIN) -config ./configs/config.yaml
 
 build-img:
 	docker build \
@@ -20,7 +31,7 @@ run-img: build-img
 	docker run $(DOCKER_IMG)
 
 version: build
-	$(BIN) version
+	$(CALENDAR_BIN) version
 
 test:
 	go test -race ./internal/...
@@ -46,4 +57,4 @@ generate:
 		--go-grpc_out=./internal/server/protobuf \
 		./api/*.proto
 
-.PHONY: build run build-img run-img version test lint generate
+.PHONY: build run-calendar build-img run-img version test lint generate run-scheduler run-sender
