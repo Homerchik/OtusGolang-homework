@@ -14,7 +14,6 @@ amqp:
   port: 5672
   user: ""
   password: ""  
-  queueName: "Notifications"
 
 storage:
   type: sql # possible values [memory, sql]
@@ -27,7 +26,12 @@ storage:
     password: "postgres"
 
 scheduler:
+  pushQueue: "notifications"
   maxNotifyBefore: 86400 # in seconds
   scanEvery: 10 # in seconds
   deleteOlderThan: 360 # in seconds
   deleteEvery: 60 # in seconds
+
+sender:
+  receiveQueue: "notifications"
+  pushQueue: "events"

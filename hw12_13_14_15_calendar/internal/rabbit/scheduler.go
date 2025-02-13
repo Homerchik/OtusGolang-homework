@@ -11,7 +11,7 @@ import (
 
 type Scheduler struct {
 	AMQPCon
-	config  config.Scheduler
+	config  config.SchedulerConf
 	storage models.Storage
 }
 
@@ -20,9 +20,9 @@ const (
 	cleanerJob = "cleaner job"
 )
 
-func NewScheduler(config config.Scheduler, storage models.Storage, logger Logger) *Scheduler {
+func NewScheduler(config config.SchedulerConf, storage models.Storage, logger Logger) *Scheduler {
 	return &Scheduler{
-		AMQPCon: AMQPCon{name: "scheduler", logger: logger},
+		AMQPCon: AMQPCon{Name: "scheduler", Logger: logger},
 		config:  config,
 		storage: storage,
 	}
@@ -30,17 +30,17 @@ func NewScheduler(config config.Scheduler, storage models.Storage, logger Logger
 
 func (s *Scheduler) Run(ctx context.Context, amqpURL, queueName string) error {
 	cleanerTicker := time.NewTicker(time.Duration(s.config.DeleteEvery) * time.Second)
-	if err := s.Connect(amqpURL, queueName, true); err != nil {
+	if err := s.Connect(amqpURL, true, queueName); err != nil {
 		return err
 	}
 	ch := make(chan models.Event)
 
 	defer func() {
-		if s.channel != nil {
-			s.channel.Close()
+		if s.Channel != nil {
+			s.Channel.Close()
 		}
-		if s.conn != nil {
-			s.conn.Close()
+		if s.Conn != nil {
+			s.Conn.Close()
 		}
 	}()
 
@@ -48,18 +48,18 @@ func (s *Scheduler) Run(ctx context.Context, amqpURL, queueName string) error {
 	for {
 		select {
 		case <-ctx.Done():
-			s.logger.Info("%s: stopping scheduler", s.name)
+			s.Logger.Info("%s: stopping scheduler", s.Name)
 			return nil
 		case event := <-ch:
 			notification := logic.BuildNotification(event)
-			if err := s.PushJSON(notification); err != nil {
-				s.logger.Error("%s: error sending notification: %v", s.name, err.Error())
+			if err := s.PushJSON(notification, queueName); err != nil {
+				s.Logger.Error("%s: error sending notification: %v", s.Name, err.Error())
 				return err
 			}
-			s.logger.Info("%s: notification with id %v has been sent", s.name, notification.ID)
+			s.Logger.Info("%s: notification with id %v has been sent", s.Name, notification.ID)
 		case <-cleanerTicker.C:
 			if err := s.cleaner(); err != nil {
-				s.logger.Error("%s: executing cleaner job: %v", cleanerJob, err)
+				s.Logger.Error("%s: executing cleaner job: %v", cleanerJob, err)
 			}
 		}
 	}
@@ -72,46 +72,46 @@ func (s *Scheduler) scanDB(ctx context.Context, out chan models.Event) error {
 		to := curTS + s.config.MaxNotifyBefore
 		events, err := s.storage.GetEvents(curTS, to)
 		if err != nil {
-			s.logger.Error("%s: can't fetch events", pusherJob)
+			s.Logger.Error("%s: can't fetch events", pusherJob)
 			return err
 		}
-		s.logger.Debug("%s: events %v", pusherJob, events)
+		s.Logger.Debug("%s: events %v", pusherJob, events)
 		for _, event := range events {
 			notifyTS := event.StartDate - int64(event.NotifyBefore)
 			if curTS >= notifyTS && (curTS-notifyTS) <= s.config.ScanEvery {
 				select {
 				case <-ctx.Done():
 				case out <- event:
-					s.logger.Debug("%s: event has been sent %v", pusherJob, event.ID)
+					s.Logger.Debug("%s: event has been sent %v", pusherJob, event.ID)
 				}
 			}
 		}
 
 		select {
 		case <-ctx.Done():
-			s.logger.Info("%s: closing scan-db goroutine", pusherJob)
+			s.Logger.Info("%s: closing scan-db goroutine", pusherJob)
 			return nil
 		case <-time.After(time.Duration(s.config.ScanEvery) * time.Second):
-			s.logger.Info("%s: new fetch of events started", pusherJob)
+			s.Logger.Info("%s: new fetch of events started", pusherJob)
 		}
 	}
 }
 
 func (s *Scheduler) cleaner() error {
-	s.logger.Info("%s: delete goroutine started", cleanerJob)
+	s.Logger.Info("%s: delete goroutine started", cleanerJob)
 	lastRunTime := time.Now().Unix()
 	events, err := s.storage.GetEvents(0, lastRunTime-s.config.DeleteOlderThan)
-	s.logger.Debug("%s: fetched events %v", cleanerJob, events)
+	s.Logger.Debug("%s: fetched events %v", cleanerJob, events)
 	if err != nil {
-		s.logger.Error("%s: can't fetch events: %v", cleanerJob, err.Error())
+		s.Logger.Error("%s: can't fetch events: %v", cleanerJob, err.Error())
 		return err
 	}
 	for _, e := range events {
 		if err := s.storage.DeleteEvent(e.ID); err != nil {
-			s.logger.Error("%s: can't delete event: %v", cleanerJob, e.ID)
+			s.Logger.Error("%s: can't delete event: %v", cleanerJob, e.ID)
 		}
 	}
-	s.logger.Info(
+	s.Logger.Info(
 		"%s: %d events older than %v successfully delete from DB",
 		cleanerJob, len(events), s.config.DeleteOlderThan,
 	)

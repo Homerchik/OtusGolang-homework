@@ -40,7 +40,7 @@ func main() {
 	)
 	server := rabbit.NewSender(log)
 
-	if err := server.Run(ctx, addr, config.AMQP.QueueName); err != nil {
+	if err := server.Run(ctx, addr, config.Sender.RcvQueue, config.Sender.PushQueue); err != nil {
 		log.Error("failed to run sender: " + err.Error())
 		cancel()
 		os.Exit(1) //nolint:gocritic
