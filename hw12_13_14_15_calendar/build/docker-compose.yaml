@@ -1,0 +1,73 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:16.6-alpine
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: secure
+      POSTGRES_DB: test
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./config/pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf
+    command: ["postgres", "-c", "listen_addresses=*"]
+
+  migrator:
+    image: migrator:develop
+    depends_on:
+      - db
+    restart: on-failure
+    environment:
+      GOOSE_DRIVER: "postgres"
+      GOOSE_DBSTRING: "postgres://postgres:secure@db:5432/test?sslmode=disable"
+    entrypoint: ["goose", "-dir", ".", "up"]
+  
+  mq:
+    image: rabbitmq:3.13.7-alpine
+    restart: always
+    ports:
+      - "5672:5672"
+    depends_on:
+      - migrator
+
+  config_service:
+    image: busybox
+    volumes:
+      - ./config:/config  # Mount host config directory
+
+  calendar:
+    image: calendar:develop
+    depends_on:
+      - config_service
+      - migrator
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config:/etc/config:ro
+    entrypoint: ["/opt/calendar/calendar-app", "-config", "/etc/config/compose-config.yaml"]
+  
+  scheduler:
+    image: scheduler:develop
+    depends_on:
+      - config_service
+      - db
+      - mq
+    restart: always
+    volumes:
+      - ./config:/etc/config:ro
+    entrypoint: ["/opt/scheduler/scheduler-app", "-config", "/etc/config/compose-config.yaml"]
+  
+  sender:
+    image: sender:develop
+    restart: always  
+    depends_on:
+      - config_service
+      - mq
+    volumes:
+      - ./config:/etc/config:ro
+    entrypoint: ["/opt/sender/sender-app", "-config", "/etc/config/compose-config.yaml"]
+
+volumes:
+  pg_data:
