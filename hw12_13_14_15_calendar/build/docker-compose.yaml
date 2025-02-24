@@ -8,6 +8,11 @@ services:
       POSTGRES_PASSWORD: secure
       POSTGRES_DB: test
       PGDATA: /var/lib/postgresql/data/pgdata
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "user"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     volumes:
       - pg_data:/var/lib/postgresql/data
       - ./config/pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf
@@ -16,7 +21,8 @@ services:
   migrator:
     image: migrator:develop
     depends_on:
-      - db
+      db:
+          condition: service_healthy
     restart: on-failure
     environment:
       GOOSE_DRIVER: "postgres"
@@ -26,10 +32,13 @@ services:
   mq:
     image: rabbitmq:3.13.7-alpine
     restart: always
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
       - "5672:5672"
-    depends_on:
-      - migrator
 
   config_service:
     image: busybox
@@ -51,9 +60,12 @@ services:
   scheduler:
     image: scheduler:develop
     depends_on:
-      - config_service
-      - db
-      - mq
+      config_service:
+          condition: service_completed_successfully
+      db:
+          condition: service_healthy
+      mq:
+          condition: service_healthy
     restart: always
     volumes:
       - ./config:/etc/config:ro
@@ -63,11 +75,27 @@ services:
     image: sender:develop
     restart: always  
     depends_on:
-      - config_service
-      - mq
+      config_service:
+        condition: service_completed_successfully
+      mq:
+        condition: service_healthy
     volumes:
       - ./config:/etc/config:ro
     entrypoint: ["/opt/sender/sender-app", "-config", "/etc/config/compose-config.yaml"]
+  
+  integration_test:
+    image: integration:develop
+    profiles:
+      - manual   
+    restart: "no"   
+    depends_on:
+      sender:
+          condition: service_started
+      calendar:
+          condition: service_started
+      mq:
+          condition: service_healthy
+    entrypoint: ["sh", "-c", "go test /go/src/integration_tests -v"]
 
 volumes:
   pg_data:

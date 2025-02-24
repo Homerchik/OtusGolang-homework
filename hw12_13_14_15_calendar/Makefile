@@ -6,7 +6,7 @@ CALENDAR_IMG="calendar:develop"
 SCHEDULER_IMG="scheduler:develop"
 SENDER_IMG="sender:develop"
 MIGRATOR_IMG="migrator:develop"
-
+INTEGRATION_IMG="integration:develop"
 
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
@@ -25,6 +25,11 @@ run-scheduler: build
 
 run-sender: build
 	$(SENDER_BIN) -config ./configs/config.yaml
+
+build-integration-img:
+	docker build \
+		-t $(INTEGRATION_IMG) \
+		-f build/Dockerfile.integration .
 
 build-calendar-img:
 	docker build \
@@ -49,7 +54,7 @@ build-migrator-img:
 		-t $(MIGRATOR_IMG) \
 		-f build/Dockerfile.migrator .
 
-build-img: build-calendar-img build-scheduler-img build-sender-img build-migrator-img
+build-img: build-integration-img build-calendar-img build-scheduler-img build-sender-img build-migrator-img
 
 run-img: build-img
 	docker run $(DOCKER_IMG)
@@ -81,4 +86,15 @@ generate:
 		--go-grpc_out=./internal/server/protobuf \
 		./api/*.proto
 
-.PHONY: build run-calendar build-scheduler-img build-calendar-img build-sender-img build-img run-img version test lint generate run-scheduler run-sender build-migrator-img
+up: build-img
+	docker-compose -f ./build/docker-compose.yaml up -d
+
+down:
+	docker-compose -f ./build/docker-compose.yaml down -v
+
+integration-tests: up
+	docker-compose -f ./build/docker-compose.yaml --profile manual up integration_test;
+	docker-compose -f ./build/docker-compose.yaml down -v;
+	docker container prune -f;
+
+.PHONY: build integration-tests run-calendar build-integration-img build-scheduler-img build-calendar-img build-sender-img build-img run-img version test lint generate run-scheduler run-sender build-migrator-img

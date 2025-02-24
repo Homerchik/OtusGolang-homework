@@ -61,8 +61,8 @@ func (is *IntegrationSuite) DeleteReq(api string) *http.Response {
 
 func (is *IntegrationSuite) SetupSuite() {
 	is.ctx, is.cancel = context.WithCancel(context.Background())
-	is.HTTPAddr = "http://127.0.0.1:8080"
-	is.MQUrl = "amqp://127.0.0.1:5672"
+	is.HTTPAddr = "http://calendar:8080"
+	is.MQUrl = "amqp://mq:5672"
 	ch := make(chan models.EventMsg)
 	is.MQChan = ch
 	go NewReceiver(logger.New("DEBUG", "")).Run(is.ctx, is.MQUrl, "events", ch)
