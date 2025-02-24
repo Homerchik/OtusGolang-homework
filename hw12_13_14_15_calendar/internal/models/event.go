@@ -4,7 +4,7 @@ import "github.com/google/uuid"
 
 type EventMsg struct {
 	EventID uuid.UUID `json:"event"`
-	Status  string    `json:"status"`  
+	Status  string    `json:"status"`
 }
 
 type Event struct {

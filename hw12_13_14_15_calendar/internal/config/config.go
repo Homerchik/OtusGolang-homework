@@ -11,13 +11,13 @@ import (
 // Организация конфига в main принуждает нас сужать API компонентов, использовать
 // при их конструировании только необходимые параметры, а также уменьшает вероятность циклической зависимости.
 type Config struct {
-	Logger    LoggerConf     `yaml:"logger"`
-	HTTP      HTTPConf       `yaml:"http"`
-	Storage   Storage        `yaml:"storage"`
-	GRPC      GRPCConf       `yaml:"grpc"`
-	AMQP      AMQPConf       `yaml:"amqp"`
-	Scheduler SchedulerConf  `yaml:"scheduler"`
-	Sender    SenderConf     `yaml:"sender"`
+	Logger    LoggerConf    `yaml:"logger"`
+	HTTP      HTTPConf      `yaml:"http"`
+	Storage   Storage       `yaml:"storage"`
+	GRPC      GRPCConf      `yaml:"grpc"`
+	AMQP      AMQPConf      `yaml:"amqp"`
+	Scheduler SchedulerConf `yaml:"scheduler"`
+	Sender    SenderConf    `yaml:"sender"`
 }
 
 type LoggerConf struct {
@@ -49,10 +49,10 @@ type SQLConf struct {
 }
 
 type AMQPConf struct {
-	Host      string `yaml:"host"`
-	Port      int    `yaml:"port"`
-	Username  string `yaml:"username"`
-	Password  string `yaml:"password"`
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
 }
 
 type SchedulerConf struct {
@@ -64,8 +64,8 @@ type SchedulerConf struct {
 }
 
 type SenderConf struct {
-	RcvQueue   string `yaml:"receiveQueue"`
-	PushQueue  string `yaml:"pushQueue"`
+	RcvQueue  string `yaml:"receiveQueue"`
+	PushQueue string `yaml:"pushQueue"`
 }
 
 func NewConfig(filepath string) (Config, error) {

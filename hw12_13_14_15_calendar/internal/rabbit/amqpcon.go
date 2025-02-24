@@ -9,10 +9,10 @@ import (
 )
 
 type AMQPCon struct {
-	Conn      *amqp.Connection
-	Channel   *amqp.Channel
-	Name      string
-	Logger    Logger
+	Conn    *amqp.Connection
+	Channel *amqp.Channel
+	Name    string
+	Logger  Logger
 }
 
 type Logger interface {
