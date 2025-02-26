@@ -35,8 +35,4 @@ COPY --from=build ${BIN_FILE} ${BIN_FILE}
 ENV CONFIG_FILE /etc/${SERVICE_NAME}/config.yaml
 COPY ./configs/config.yaml ${CONFIG_FILE}
 
-RUN wget \
-    https://raw.githubusercontent.com/pressly/goose/master/install.sh |\
-    sh
-
 CMD ${BIN_FILE} -config ${CONFIG_FILE}
