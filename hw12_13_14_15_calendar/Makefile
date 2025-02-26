@@ -2,7 +2,12 @@ CALENDAR_BIN := "./bin/calendar"
 SCHEDULER_BIN := "./bin/scheduler"
 SENDER_BIN := "./bin/sender"
 
-DOCKER_IMG="calendar:develop"
+CALENDAR_IMG="calendar:develop"
+SCHEDULER_IMG="scheduler:develop"
+SENDER_IMG="sender:develop"
+MIGRATOR_IMG="migrator:develop"
+INTEGRATION_IMG="integration:develop"
+
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
@@ -21,11 +26,35 @@ run-scheduler: build
 run-sender: build
 	$(SENDER_BIN) -config ./configs/config.yaml
 
-build-img:
+build-integration-img:
 	docker build \
-		--build-arg=LDFLAGS="$(LDFLAGS)" \
-		-t $(DOCKER_IMG) \
+		-t $(INTEGRATION_IMG) \
+		-f build/Dockerfile.integration .
+
+build-calendar-img:
+	docker build \
+		--build-arg=LDFLAGS="$(LDFLAGS)" --build-arg SERVICE_NAME=calendar \
+		-t $(CALENDAR_IMG) \
 		-f build/Dockerfile .
+
+build-scheduler-img:
+	docker build \
+		--build-arg=LDFLAGS="$(LDFLAGS)" --build-arg=SERVICE_NAME=scheduler \
+		-t $(SCHEDULER_IMG) \
+		-f build/Dockerfile .
+
+build-sender-img:
+	docker build \
+		--build-arg LDFLAGS="$(LDFLAGS)" --build-arg=SERVICE_NAME=sender \
+		-t $(SENDER_IMG) \
+		-f build/Dockerfile .
+
+build-migrator-img:
+	docker build \
+		-t $(MIGRATOR_IMG) \
+		-f build/Dockerfile.migrator .
+
+build-img: build-integration-img build-calendar-img build-scheduler-img build-sender-img build-migrator-img
 
 run-img: build-img
 	docker run $(DOCKER_IMG)
@@ -57,4 +86,15 @@ generate:
 		--go-grpc_out=./internal/server/protobuf \
 		./api/*.proto
 
-.PHONY: build run-calendar build-img run-img version test lint generate run-scheduler run-sender
+up: build-img
+	docker-compose -f ./build/docker-compose.yaml up -d
+
+down:
+	docker-compose -f ./build/docker-compose.yaml down -v
+
+integration-tests: up
+	docker-compose -f ./build/docker-compose.yaml --profile manual up integration_test;
+	docker-compose -f ./build/docker-compose.yaml down -v;
+	docker container prune -f;
+
+.PHONY: build integration-tests run-calendar build-integration-img build-scheduler-img build-calendar-img build-sender-img build-img run-img version test lint generate run-scheduler run-sender build-migrator-img

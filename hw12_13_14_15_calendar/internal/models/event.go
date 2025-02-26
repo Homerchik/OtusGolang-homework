@@ -2,6 +2,11 @@ package models
 
 import "github.com/google/uuid"
 
+type EventMsg struct {
+	EventID uuid.UUID `json:"event"`
+	Status  string    `json:"status"`
+}
+
 type Event struct {
 	ID           uuid.UUID `json:"id,omitempty"`
 	Title        string    `json:"title"`

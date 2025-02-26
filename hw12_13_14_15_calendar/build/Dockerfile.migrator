@@ -1,0 +1,12 @@
+FROM golang:1.22
+
+LABEL ORGANIZATION="OTUS Online Education"
+LABEL SERVICE="$SERVICE_NAME"
+LABEL MAINTAINERS="yevhenii.hulkov@gmail.com"
+
+WORKDIR /migration
+
+COPY ../migrations .
+RUN go install github.com/pressly/goose/v3/cmd/goose@latest
+
+CMD ["/bin/sh"]

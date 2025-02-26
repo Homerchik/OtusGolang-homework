@@ -53,7 +53,7 @@ func main() {
 	)
 	server := rabbit.NewScheduler(config.Scheduler, storage, log)
 
-	if err := server.Run(ctx, addr, config.AMQP.QueueName); err != nil {
+	if err := server.Run(ctx, addr, config.Scheduler.PushQueue); err != nil {
 		log.Error("failed to run scheduler: " + err.Error())
 		cancel()
 		os.Exit(1)

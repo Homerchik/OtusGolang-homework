@@ -9,11 +9,10 @@ import (
 )
 
 type AMQPCon struct {
-	conn      *amqp.Connection
-	channel   *amqp.Channel
-	queueName string
-	name      string
-	logger    Logger
+	Conn    *amqp.Connection
+	Channel *amqp.Channel
+	Name    string
+	Logger  Logger
 }
 
 type Logger interface {
@@ -22,55 +21,56 @@ type Logger interface {
 	Error(format string, a ...any)
 }
 
-func (a *AMQPCon) Connect(amqpURL string, queueName string, createQueue bool) error {
-	a.queueName = queueName
+func (a *AMQPCon) Connect(amqpURL string, createQueue bool, queues ...string) error {
 	conn, err := amqp.Dial(amqpURL)
 	if err != nil {
-		a.logger.Error("%s: connecting to rabbitmq %v: %v", a.name, amqpURL, err.Error())
+		a.Logger.Error("%s: connecting to rabbitmq %v: %v", a.Name, amqpURL, err.Error())
 		return err
 	}
-	a.conn = conn
-	a.logger.Info("%s: successfully connected to rabbitmq", a.name)
+	a.Conn = conn
+	a.Logger.Info("%s: successfully connected to rabbitmq", a.Name)
 
-	a.channel, err = a.conn.Channel()
+	a.Channel, err = a.Conn.Channel()
 	if err != nil {
-		a.logger.Error("%s: opening channel to rabbitmq: %v", a.name, err.Error())
+		a.Logger.Error("%s: opening channel to rabbitmq: %v", a.Name, err.Error())
 		return err
 	}
-	a.logger.Info("%s: channel successfully opened", a.name)
+	a.Logger.Info("%s: channel successfully opened", a.Name)
 
 	if createQueue {
-		_, err = a.channel.QueueDeclare(
-			a.queueName,
-			false,
-			false,
-			false,
-			false,
-			nil,
-		)
-		if err != nil {
-			a.logger.Error("%s: can't connect queue: %v", a.name, err)
-			return err
+		for _, q := range queues {
+			_, err = a.Channel.QueueDeclare(
+				q,
+				false,
+				false,
+				false,
+				false,
+				nil,
+			)
+			if err != nil {
+				a.Logger.Error("%s: can't create queue: %v", a.Name, err)
+				return err
+			}
+			a.Logger.Info("%s: successfully created queue", a.Name)
 		}
-		a.logger.Info("%s: successfully created queue", a.name)
 	}
 	return nil
 }
 
-func (a *AMQPCon) PushJSON(v interface{}) error {
+func (a *AMQPCon) PushJSON(v interface{}, queueName string) error {
 	name := "pusher job"
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	a.logger.Debug("%s: message is ready to send: %v", name, v)
+	a.Logger.Debug("%s: message is ready to send: %v", name, v)
 	data, err := json.Marshal(v)
 	if err != nil {
 		return err
 	}
-	a.logger.Debug("%s: message has sent", name)
-	return a.channel.PublishWithContext(
+	a.Logger.Debug("%s: message has sent", name)
+	return a.Channel.PublishWithContext(
 		ctx,
 		"",
-		a.queueName,
+		queueName,
 		false,
 		false,
 		amqp.Publishing{
