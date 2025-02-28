@@ -1,0 +1,9 @@
+dependencies:
+- name: rabbitmq
+  repository: https://groundhog2k.github.io/helm-charts/
+  version: 2.0.4
+- name: postgresql
+  repository: https://charts.bitnami.com/bitnami
+  version: 16.4.14
+digest: sha256:8d23fef6eb4d08c92ea6614bc9814837a6a970e6244777d7ac42717013be04ed
+generated: "2025-02-28T10:28:24.314415+01:00"

@@ -1,0 +1,32 @@
+{{- if .Values.sender.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sender
+  labels:
+    app: sender
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sender
+  template:
+    metadata:
+      labels:
+        app: sender
+    spec:
+      containers:
+      - name: sender
+        image: {{ .Values.sender.repository }}:{{ .Values.sender.tag }}
+        volumeMounts:
+          - name: config-vol
+            mountPath: /etc/sender
+      volumes:
+        - name: config-vol
+          configMap:
+            name: general-config
+            defaultMode: 440
+            items:
+              - key: configFile
+                path: config.yaml    
+{{- end }}
