@@ -46,9 +46,10 @@ func TestGetDomainStat(t *testing.T) {
 	})
 
 	t.Run("search in bad-json", func(t *testing.T) {
-		badJson := `{"Id":6,"Name":"Test Horse","Username":"Horsie123","Email":123,"Phone":"146-91-01","Password":"acSBF5","Address":"Russell Trail 61"}`
+		badJSON := `{"Id":6,"Name":"Test Horse","Username":"Horsie123","Email":123,` +
+			` "Phone":"146-91-01","Password":"acSBF5","Address":"Russell Trail 61"}`
 
-		_, err := GetDomainStat(bytes.NewBufferString(badJson), "eu")
+		_, err := GetDomainStat(bytes.NewBufferString(badJSON), "eu")
 		require.Error(t, err, "Check error catched in case of wrong json")
 	})
 }
