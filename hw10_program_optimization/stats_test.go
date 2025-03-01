@@ -1,3 +1,4 @@
+//go:build !bench
 // +build !bench
 
 package hw10programoptimization
@@ -21,8 +22,8 @@ func TestGetDomainStat(t *testing.T) {
 		result, err := GetDomainStat(bytes.NewBufferString(data), "com")
 		require.NoError(t, err)
 		require.Equal(t, DomainStat{
-			"browsecat.com": 2,
-			"linktype.com":  1,
+			"browsecat.com":   2,
+			"linktype.com":    1,
 			"top.top.top.com": 1,
 		}, result)
 	})

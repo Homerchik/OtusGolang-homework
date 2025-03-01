@@ -30,7 +30,7 @@ func getUsers(r io.Reader) ([]string, error) {
 	br := bufio.NewReader(r)
 	delimiter := byte(0x0A)
 	var (
-		user User
+		user   User
 		emails []string
 	)
 	for {
