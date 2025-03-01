@@ -1,21 +1,19 @@
 package hw10programoptimization
 
 import (
-	"encoding/json"
+	"bufio"
 	"fmt"
 	"io"
 	"regexp"
 	"strings"
+
+	"github.com/mailru/easyjson"
 )
 
 type User struct {
-	ID       int
-	Name     string
-	Username string
-	Email    string
-	Phone    string
-	Password string
-	Address  string
+	ID int
+	//nolint:staticcheck,tagliatelle
+	Email string `json:"Email,nocopy"`
 }
 
 type DomainStat map[string]int
@@ -28,38 +26,38 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 	return countDomains(u, domain)
 }
 
-type users [100_000]User
-
-func getUsers(r io.Reader) (result users, err error) {
-	content, err := io.ReadAll(r)
-	if err != nil {
-		return
-	}
-
-	lines := strings.Split(string(content), "\n")
-	for i, line := range lines {
-		var user User
-		if err = json.Unmarshal([]byte(line), &user); err != nil {
-			return
-		}
-		result[i] = user
-	}
-	return
-}
-
-func countDomains(u users, domain string) (DomainStat, error) {
-	result := make(DomainStat)
-
-	for _, user := range u {
-		matched, err := regexp.Match("\\."+domain, []byte(user.Email))
-		if err != nil {
+func getUsers(r io.Reader) ([]string, error) {
+	br := bufio.NewReader(r)
+	delimiter := byte(0x0A)
+	var (
+		user   User
+		emails []string
+	)
+	for {
+		line, err := br.ReadBytes(delimiter)
+		if err != nil && err != io.EOF {
 			return nil, err
 		}
+		if jsonErr := easyjson.Unmarshal(line, &user); jsonErr != nil {
+			return nil, err
+		}
+		emails = append(emails, user.Email)
+		if err == io.EOF {
+			return emails, nil
+		}
+	}
+}
 
-		if matched {
-			num := result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])]
-			num++
-			result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])] = num
+func countDomains(emails []string, domain string) (DomainStat, error) {
+	result := make(DomainStat)
+	re, err := regexp.Compile(`\.` + domain)
+	if err != nil {
+		return nil, err
+	}
+	for _, email := range emails {
+		if re.Match([]byte(email)) {
+			fullDomain := strings.SplitN(email, "@", 2)
+			result[strings.ToLower(fullDomain[1])]++
 		}
 	}
 	return result, nil
