@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: general-config
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+data:
+  configFile: |
+    logger:
+      level: {{ .Values.logger.level }}
+      format: {{ .Values.logger.format }}
+
+    http:
+      host: {{ .Values.calendar.http.host }}
+      port: {{ .Values.calendar.http.port }}
+
+    grpc:
+      port: {{ .Values.calendar.grpc.port }}
+
+    amqp:
+      host: {{ .Release.Name }}-rabbitmq
+      port: 5672
+      username: {{ include "amqp.username" . }}
+      password: {{ include "amqp.password" . }}
+
+    storage:
+      type: {{ .Values.calendar.storage.type }}
+      {{- if eq .Values.calendar.storage.type "sql" }}
+      sql:
+        host: {{ .Release.Name }}-postgresql
+        port: 5432
+        dbName: {{ .Values.global.postgresql.auth.database }}
+        driver: "postgres"
+        username: {{ .Values.global.postgresql.auth.username }}
+        password: {{ .Values.global.postgresql.auth.password }}
+      {{- end }}
+
+    {{- if .Values.scheduler.enabled }}
+    scheduler:
+      pushQueue: {{ .Values.scheduler.pushQueue }}
+      maxNotifyBefore: {{ .Values.scheduler.maxNotifyBefore }}
+      scanEvery: {{ .Values.scheduler.scanEvery }}
+      deleteOlderThan: {{ .Values.scheduler.deleteOlderThan }}
+      deleteEvery: {{ .Values.scheduler.deleteEvery }}
+    {{- end }}
+
+    {{- if .Values.sender.enabled }}
+    sender:
+      receiveQueue: {{ .Values.sender.receiveQueue }}
+      pushQueue: {{ .Values.sender.pushQueue }}
+    {{- end }}

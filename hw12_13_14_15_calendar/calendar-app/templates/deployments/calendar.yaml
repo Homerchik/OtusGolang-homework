@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: calendar
+  labels:
+        app: calendar
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+        app: calendar
+  template:
+    metadata:
+      labels:
+        app: calendar
+        component: calendar
+    spec:
+      containers:
+        - name: calendar
+          image: {{ .Values.calendar.repository }}:{{ .Values.calendar.tag }}
+          ports:
+            - containerPort: {{ .Values.calendar.http.port }}
+          volumeMounts:
+            - name: config-vol
+              mountPath: /etc/calendar
+      volumes:
+        - name: config-vol
+          configMap:
+            name: general-config
+            defaultMode: 440
+            items:
+              - key: configFile
+                path: config.yaml

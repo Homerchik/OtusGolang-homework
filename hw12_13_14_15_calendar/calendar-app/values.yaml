@@ -1,0 +1,70 @@
+replicaCount: 1
+
+rabbitmq:
+  authentication:
+    user:
+      value: "guest"
+    password:
+      value: "guest"
+    erlangCookie:
+      value: "97a518190c6299a734128dab3ec41ad7772de20e009d3b208d1455c746b47c50"
+
+global:
+  postgresql:
+    auth:
+      username: "admin"
+      password: "admin_the_best"
+      postgresPassword: "postgres"
+      database: "test"
+      enablePostgresUser: true
+
+logger:
+  level: "DEBUG"
+  format: ""
+
+calendar:
+  enabled: true
+  repository: "calendar"
+  tag: "develop"
+  pullPolicy: IfNotPresent
+
+  storage:
+    type: "sql"
+  
+  http:
+    host: "0.0.0.0"
+    port: 8080
+  
+  grpc:
+    port: 8090
+
+
+scheduler:
+  enabled: true
+  repository: "scheduler"
+  tag: "develop"
+  pullPolicy: IfNotPresent
+  pushQueue: "notifications"
+  maxNotifyBefore: 86400
+  scanEvery: 10
+  deleteOlderThan: 360
+  deleteEvery: 60
+  mq_username: "guest"
+  mq_password: "guest"
+
+sender:
+  enabled: true
+  repository: sender
+  tag: "develop"
+  pullPolicy: IfNotPresent
+  receiveQueue: "notifications"
+  pushQueue: "events"
+
+migrator:
+  repository: migrator
+  tag: "develop"
+  pullPolicy: IfNotPresent
+
+amqp:
+  username: "guest"
+  password: "guest"
